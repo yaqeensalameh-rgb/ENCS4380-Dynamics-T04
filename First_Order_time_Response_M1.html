@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 1 - First Order Response</title>
+  <style>
+
+    /* ---------- Base page style ---------- */
+    * {
+      box-sizing: border-box;
+    }
+
+    /* Hide complete step-only sections when Ramp mode is selected. */
+    [hidden] {
+      display: none !important;
+    }
+
+    :root {
+      --page-bg: #f8f7fa;
+      --surface: #ffffff;
+      --primary: #d98eaa;
+      --primary-dark: #a94f73;
+      --primary-soft: #f8eaf0;
+      --secondary: #e9e3f2;
+      --text: #30313a;
+      --muted: #686976;
+      --border: #e9e5eb;
+      --shadow: 0 8px 24px rgba(48, 35, 55, 0.07);
+      --radius: 16px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 20px 48px;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 1120px;
+      margin-inline: auto;
+    }
+
+    /* ---------- Main title and section headings ---------- */
+    h1 {
+      margin: 0 0 28px;
+      padding: 26px 30px;
+      color: #71364f;
+      background: linear-gradient(135deg, #f9eaf0, #f2edf8);
+      border: 1px solid #f0dce5;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      font-size: clamp(1.55rem, 3vw, 2.15rem);
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    h2 {
+      margin: 34px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      color: #75445a;
+      font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+      line-height: 1.35;
+    }
+
+    h3 {
+      margin: 0 0 12px;
+      color: var(--primary-dark);
+      font-size: 1.15rem;
+    }
+
+    p {
+      margin: 12px 0;
+      color: var(--muted);
+    }
+
+    /* ---------- Controls ---------- */
+    label {
+      display: inline-block;
+      margin: 8px 0 5px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    #kValue,
+    #tauValue {
+      display: inline-block;
+      min-width: 42px;
+      margin-inline-start: 5px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    input[type="range"] {
+      display: block;
+      width: min(100%, 520px);
+      height: 8px;
+      margin: 10px 0 20px;
+      accent-color: var(--primary-dark);
+      cursor: pointer;
+    }
+
+    select,
+    button {
+      min-height: 42px;
+      padding: 9px 14px;
+      border: 1px solid #ded7e2;
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+    }
+
+    select {
+      min-width: 190px;
+      cursor: pointer;
+    }
+
+    button {
+      margin-inline-start: 8px;
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    select:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(169, 79, 115, 0.22);
+      outline-offset: 3px;
+    }
+
+    /* ---------- Information panel and charts ---------- */
+    #rampInfo {
+      margin-top: 20px;
+      padding: 18px 22px;
+      border: 1px solid #eadce8;
+      border-inline-start: 4px solid var(--primary);
+      border-radius: var(--radius);
+      background: #fffafd;
+      box-shadow: var(--shadow);
+    }
+
+    #rampInfo p {
+      margin: 8px 0;
+      color: var(--text);
+    }
+
+    #graph,
+    #errorGraph {
+      width: 100%;
+      min-width: 0;
+      min-height: 360px;
+      margin: 12px 0 28px;
+      padding: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    /* ---------- Validation table ---------- */
+    table {
+      width: 100%;
+      margin: 14px 0 28px;
+      border: 1px solid var(--border);
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    th,
+    td {
+      padding: 13px 16px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    th {
+      background: var(--primary-soft);
+      color: #75445a;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover,
+    table tr:not(:first-child):hover {
+      background: #fcf8fb;
+    }
+
+    /* ---------- Prediction feedback ---------- */
+    #predictionResult {
+      min-height: 28px;
+      margin-top: 14px;
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    /* ---------- Right-to-left support when page direction is RTL ---------- */
+    html[dir="rtl"] body,
+    body:dir(rtl) {
+      text-align: right;
+    }
+
+    html[dir="rtl"] th,
+    html[dir="rtl"] td,
+    body:dir(rtl) th,
+    body:dir(rtl) td {
+      text-align: right;
+    }
+
+    /* ---------- Responsive layout for tablets and phones ---------- */
+    @media (max-width: 700px) {
+      body {
+        padding: 18px 13px 32px;
+        font-size: 15px;
+      }
+
+      h1 {
+        padding: 20px 16px;
+        margin-bottom: 22px;
+      }
+
+      h2 {
+        margin-top: 27px;
+      }
+
+      #graph,
+      #errorGraph {
+        min-height: 300px;
+        padding: 3px;
+      }
+
+      th,
+      td {
+        padding: 10px 8px;
+        font-size: 0.9rem;
+      }
+
+      select {
+        max-width: 100%;
+      }
+
+      button {
+        margin: 10px 0 0;
+      }
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding-inline: 10px;
+      }
+
+      #graph,
+      #errorGraph {
+        min-height: 260px;
+      }
+
+      th,
+      td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+      }
+    }
+
+    </style>
+  <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+</head>
+
+<body>
+
+  <h1>Module 1: First-Order Time Response</h1>
+
+  <h2>System Parameters</h2>
+
+  <label>
+    Gain (K):
+    <span id="kValue">1</span>
+  </label>
+  <br>
+  <input type="range" id="kSlider"
+         min="0.5" max="3" step="0.1" value="1">
+
+  <br><br>
+
+  <label>
+    Time Constant (τ):
+    <span id="tauValue">2</span> seconds
+  </label>
+  <br>
+  <input type="range" id="tauSlider"
+         min="0.5" max="10" step="0.5" value="2">
+
+  <br><br>
+
+  <label for="inputType">Input Type:</label>
+  <select id="inputType">
+    <option value="step">Step Input</option>
+    <option value="ramp">Ramp Input</option>
+  </select>
+
+  <div id="rampInfo" hidden>
+    <h3>Ramp Response</h3>
+
+    <p>Ramp Lag: <span id="rampLag"></span></p>
+
+    <p>Steady-State Error: <span id="steadyError"></span></p>
+  </div>
+
+  <h2>System Response</h2>
+  <div id="graph"></div>
+
+  <div id="validationSection">
+    <h2>Validation Checks</h2>
+
+    <table border="1" cellpadding="8">
+    <tr>
+      <th>Test</th>
+      <th>Expected</th>
+      <th>Actual</th>
+      <th>Status</th>
+    </tr>
+
+    <tr>
+      <td id="testTau">Response at t = τ</td>
+      <td id="expectedTau"></td>
+      <td id="actualTau"></td>
+      <td id="statusTau"></td>
+    </tr>
+
+    <tr>
+      <td id="test3Tau">Response at t = 3τ</td>
+      <td id="expected3Tau"></td>
+      <td id="actual3Tau"></td>
+      <td id="status3Tau"></td>
+    </tr>
+    </table>
+  </div>
+
+  <div id="errorSection">
+    <h2>Error Fraction</h2>
+
+  <p>
+    E(t) = exp(-t / τ)
+    <br>
+    Log Slope: <span id="errorSlope"></span>
+  </p>
+
+    <div id="errorGraph"></div>
+  </div>
+
+  <h2>Predict, Then Check</h2>
+
+  <p>
+    If the time constant (τ) increases, what happens to the sensor response?
+  </p>
+
+  <select id="prediction">
+    <option value="">Choose your answer</option>
+    <option value="faster">Faster response</option>
+    <option value="slower">Slower response</option>
+    <option value="same">No change</option>
+  </select>
+
+  <button id="checkPrediction">Check</button>
+
+  <p id="predictionResult"></p>
+
+
+  <script>
+
+    const kSlider = document.getElementById("kSlider");
+    const tauSlider = document.getElementById("tauSlider");
+    const inputType = document.getElementById("inputType");
+
+
+    function updateGraph() {
+
+      const K = Number(kSlider.value);
+      const tau = Number(tauSlider.value);
+      const A = 1;
+
+      const isRamp = inputType.value === "ramp";
+
+      document.getElementById("kValue").textContent = K;
+      document.getElementById("tauValue").textContent = tau;
+
+      document.getElementById("rampInfo").hidden = !isRamp;
+      document.getElementById("errorSection").hidden = isRamp;
+
+
+      document.getElementById("rampLag").textContent =
+        tau.toFixed(2) + " seconds";
+
+      document.getElementById("steadyError").textContent =
+        (K * A * tau).toFixed(4);
+
+
+      const time = [];
+      const output = [];
+      const idealOutput = [];
+
+
+      const maxTime = isRamp ? 5 * tau : 3 * tau;
+
+      for (let i = 0; i <= 200; i++) {
+
+        const t = i * (maxTime / 200);
+
+        let y;
+        let ideal;
+
+        if (isRamp) {
+
+          ideal = K * A * t;
+
+          y = K * A * (
+            t - tau * (1 - Math.exp(-t / tau))
+          );
+
+        } else {
+
+          ideal = K * A;
+
+          y = K * A * (1 - Math.exp(-t / tau));
+
+        }
+
+        time.push(t);
+        output.push(y);
+        idealOutput.push(ideal);
+
+      }
+
+
+      const yTau = K * A * (1 - Math.exp(-tau / tau ));
+      const y3Tau = K * A * (1 - Math.exp(-(3 * tau) / tau));
+
+      const traces = [
+        {
+          x: time,
+          y: output,
+          mode: "lines",
+          name: "Actual Output"
+        },
+        {
+          x: time,
+          y: idealOutput,
+          mode: "lines",
+          line: { dash: "dash" },
+          name: "Ideal Output"
+        }
+      ];
+
+
+      if (!isRamp) {
+
+        traces.push({
+          x: [tau, 3 * tau],
+          y: [yTau, y3Tau],
+          mode: "markers+text",
+          text: ["63.2% at τ", "95% at 3τ"],
+          textposition: "top center",
+          name: "Reference Points"
+        });
+
+      }
+
+
+      Plotly.react("graph", traces, {
+
+        title: isRamp
+          ? "First-Order Ramp Response"
+          : "First-Order Step Response",
+
+        xaxis: {
+          title: "Time (seconds)"
+        },
+
+        yaxis: {
+          title: "Sensor Output"
+        }
+
+      }, { responsive: true });
+
+
+      if (isRamp) {
+
+        // Ramp validation: check the lag and steady-state error near 5τ.
+        document.getElementById("testTau").textContent =
+          "Ramp lag (at 5τ)";
+
+        document.getElementById("test3Tau").textContent =
+          "Steady-state error (at 5τ)";
+
+        const expectedLag = tau;
+        const expectedError = K * A * tau;
+
+        const lastIndex = output.length - 1;
+        const finalError = idealOutput[lastIndex] - output[lastIndex];
+        const actualLag = finalError / (K * A);
+
+        document.getElementById("expectedTau").textContent =
+          expectedLag.toFixed(4) + " s";
+
+        document.getElementById("actualTau").textContent =
+          actualLag.toFixed(4) + " s";
+
+        document.getElementById("expected3Tau").textContent =
+          expectedError.toFixed(4);
+
+        document.getElementById("actual3Tau").textContent =
+          finalError.toFixed(4);
+
+        document.getElementById("statusTau").textContent =
+          Math.abs(actualLag - expectedLag) <= expectedLag * 0.01
+            ? "PASS" : "FAIL";
+
+        document.getElementById("status3Tau").textContent =
+          Math.abs(finalError - expectedError) <= expectedError * 0.01
+            ? "PASS" : "FAIL";
+
+      } else {
+
+        // Step validation: check the response at τ and 3τ.
+        document.getElementById("testTau").textContent =
+          "Response at t = τ";
+
+        document.getElementById("test3Tau").textContent =
+          "Response at t = 3τ";
+
+        const expectedTau = 0.632 * K * A;
+        const expected3Tau = 0.95 * K * A;
+
+        document.getElementById("expectedTau").textContent =
+          expectedTau.toFixed(4);
+
+        document.getElementById("actualTau").textContent =
+          yTau.toFixed(4);
+
+        document.getElementById("expected3Tau").textContent =
+          expected3Tau.toFixed(4);
+
+        document.getElementById("actual3Tau").textContent =
+          y3Tau.toFixed(4);
+
+        document.getElementById("statusTau").textContent =
+          Math.abs(yTau - expectedTau) < 0.005 ? "PASS" : "FAIL";
+
+        document.getElementById("status3Tau").textContent =
+          Math.abs(y3Tau - expected3Tau) < 0.005 ? "PASS" : "FAIL";
+
+      }
+
+      const errorTime = [];
+      const errorFraction = [];
+
+      for (let i = 0; i <= 100; i++) {
+
+        const t = 5 * tau * i / 100;
+
+        errorTime.push(t);
+        errorFraction.push(Math.exp(-t / tau));
+
+      }
+
+
+      document.getElementById("errorSlope").textContent =
+        (-1 / tau).toFixed(3) + " s⁻¹";
+
+
+      Plotly.react("errorGraph", [{
+
+        x: errorTime,
+        y: errorFraction,
+        mode: "lines",
+        name: "Error Fraction"
+
+      }], {
+
+        title: "Normalized Step Error",
+
+        xaxis: {
+          title: "Time (seconds)"
+        },
+
+        yaxis: {
+          title: "Error Fraction",
+          type: "log"
+        }
+
+      }, { responsive: true });
+
+    }
+
+
+    kSlider.addEventListener("input", updateGraph);
+    tauSlider.addEventListener("input", updateGraph);
+    inputType.addEventListener("change", updateGraph);
+
+
+    updateGraph();
+
+
+    document.getElementById("checkPrediction")
+      .addEventListener("click", function() {
+
+        const answer = document.getElementById("prediction").value;
+
+        const result = document.getElementById("predictionResult");
+
+        if (answer === "") {
+
+          result.textContent = "Please choose an answer.";
+
+        } else if (answer === "slower") {
+
+          result.textContent =
+            "Correct! A larger time constant means a slower response.";
+
+        } else {
+
+          result.textContent =
+            "Try again. Increasing the time constant makes the response slower.";
+
+        }
+
+      });
+
+  </script>
+
+</body>
+</html>
