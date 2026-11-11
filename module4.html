@@ -1,1 +1,602 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 4 - Guess the Sensor</title>
+
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff5fa;
+      color: #493444;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h1, h2 {
+      color: #c04483;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #87677b;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      margin: 20px 0;
+      border: 1px solid #f2c9dd;
+      border-radius: 14px;
+    }
+
+    .plot {
+      width: 100%;
+      min-height: 360px;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #e7a9c9;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #cb5592;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      padding: 11px 20px;
+      margin: 10px 8px 0 0;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #a93d75;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .note {
+      color: #87677b;
+      font-size: 14px;
+    }
+
+    .result {
+      padding: 14px;
+      border-radius: 9px;
+      background: #fff4f9;
+    }
+
+    .good {
+      color: #25834b;
+      font-weight: bold;
+    }
+
+    .bad {
+      color: #b33760;
+      font-weight: bold;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .plot {
+        min-height: 300px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>Module 4: Guess the Sensor</h1>
+  <p class="subtitle">
+    Estimate hidden sensor parameters from a noisy response curve.
+  </p>
+
+  <section class="card">
+    <h2>1. Unknown Sensor Response</h2>
+    <p id="sensorInfo" class="note"></p>
+    <div id="sensorPlot" class="plot"></div>
+  </section>
+
+  <section class="card">
+    <h2>2. Your Prediction</h2>
+    <p>Estimate the parameters before revealing the answer.</p>
+
+    <div id="firstFields" class="fields" hidden>
+      <div>
+        <label for="kGuess">Gain (K)</label>
+        <input
+          type="number"
+          id="kGuess"
+          step="any"
+          min="0.01"
+          placeholder="e.g. 1.20"
+        >
+      </div>
+
+      <div>
+        <label for="tauGuess">Time constant (τ), s</label>
+        <input
+          type="number"
+          id="tauGuess"
+          step="any"
+          min="0.01"
+          placeholder="e.g. 2.50"
+        >
+      </div>
+    </div>
+
+    <div id="secondFields" class="fields" hidden>
+      <div>
+        <label for="zetaGuess">Damping ratio (ζ)</label>
+        <input
+          type="number"
+          id="zetaGuess"
+          step="any"
+          min="0.01"
+          placeholder="e.g. 0.60"
+        >
+      </div>
+
+      <div>
+        <label for="wnGuess">
+          Natural frequency (ωn), rad/s
+        </label>
+        <input
+          type="number"
+          id="wnGuess"
+          step="any"
+          min="0.01"
+          placeholder="e.g. 2.00"
+        >
+      </div>
+    </div>
+
+    <button id="checkBtn" type="button">Check Guess</button>
+    <button id="hintBtn" type="button">Show Hint</button>
+
+    <p id="hintText" class="note" hidden></p>
+  </section>
+
+  <section class="card">
+    <h2>3. Results &amp; Running Score</h2>
+
+    <p id="resultText" class="result" aria-live="polite">
+      Submit your guess to reveal the answer.
+    </p>
+
+    <p id="scoreText">
+      Rounds: 0 | Full-mark rounds: 0 | Total points: 0
+    </p>
+
+    <button id="newSensorBtn" type="button">
+      New Sensor
+    </button>
+
+    <p class="note">
+      Both parameters within 10% earn 100 points.
+      Otherwise the round earns 0.
+      Each round can be scored only once.
+    </p>
+  </section>
+
+</div>
+
+<script>
+  // Current sensor and session score
+  let sensor = null;
+  let timePoints = [];
+  let measuredPoints = [];
+
+  let roundScored = false;
+  let rounds = 0;
+  let wins = 0;
+  let totalPoints = 0;
+
+  const $ = (id) => document.getElementById(id);
+
+  const rand = (min, max) =>
+    min + Math.random() * (max - min);
+
+  // First-order unit-step or steady-state sine response
+  function firstResponse(t, K, tau, mode, omega) {
+
+    if (mode === "sine") {
+      const M = 1 / Math.sqrt(1 + (omega * tau) ** 2);
+      const phase = Math.atan(omega * tau);
+
+      return K * M * Math.sin(omega * t - phase);
+    }
+
+    return K * (1 - Math.exp(-t / tau));
+  }
+
+  // Second-order unit-step response
+  function secondResponse(t, zeta, wn) {
+
+    // Critically damped
+    if (Math.abs(zeta - 1) < 1e-8) {
+      return 1 - Math.exp(-wn * t) * (1 + wn * t);
+    }
+
+    // Underdamped
+    if (zeta < 1) {
+      const root = Math.sqrt(1 - zeta * zeta);
+
+      return 1 - Math.exp(-zeta * wn * t) * (
+        Math.cos(wn * root * t) +
+        zeta / root * Math.sin(wn * root * t)
+      );
+    }
+
+    // Overdamped
+    const root = Math.sqrt(zeta * zeta - 1);
+
+    const r1 = -wn * (zeta - root);
+    const r2 = -wn * (zeta + root);
+
+    return 1 - (
+      r2 * Math.exp(r1 * t) -
+      r1 * Math.exp(r2 * t)
+    ) / (r2 - r1);
+  }
+
+  function responseAt(t, params) {
+
+    if (params.order === 1) {
+      return firstResponse(
+        t,
+        params.K,
+        params.tau,
+        params.mode,
+        params.omega
+      );
+    }
+
+    return secondResponse(
+      t,
+      params.zeta,
+      params.wn
+    );
+  }
+
+  // Draw noisy data and optional comparison curves
+  function plotRound(guessedParams = null) {
+
+    const traces = [{
+      x: timePoints,
+      y: measuredPoints,
+      type: "scatter",
+      mode: "lines",
+      name: "Noisy measurement",
+      line: {
+        color: "#cb5592",
+        width: 2
+      }
+    }];
+
+    if (guessedParams !== null) {
+
+      traces.push({
+        x: timePoints,
+        y: timePoints.map(
+          t => responseAt(t, guessedParams)
+        ),
+        type: "scatter",
+        mode: "lines",
+        name: "Your guessed model",
+        line: {
+          color: "#7b5aa6",
+          width: 3,
+          dash: "dash"
+        }
+      });
+
+      traces.push({
+        x: timePoints,
+        y: timePoints.map(
+          t => responseAt(t, sensor)
+        ),
+        type: "scatter",
+        mode: "lines",
+        name: "True model",
+        line: {
+          color: "#25834b",
+          width: 3
+        }
+      });
+    }
+
+    Plotly.react("sensorPlot", traces, {
+      title: sensor.order === 1
+        ? "Unknown First-Order Response"
+        : "Unknown Second-Order Step Response",
+
+      xaxis: {
+        title: "Time (s)",
+        range: [0, timePoints[timePoints.length - 1]]
+      },
+
+      yaxis: {
+        title: "Sensor output"
+      },
+
+      paper_bgcolor: "white",
+      plot_bgcolor: "#fffafd",
+
+      margin: {
+        t: 55,
+        b: 70,
+        l: 55,
+        r: 15
+      },
+
+      legend: {
+        orientation: "h",
+        y: -0.25
+      }
+    }, {
+      responsive: true,
+      displaylogo: false
+    });
+  }
+
+  // Generate a random sensor
+  function newSensor() {
+
+    if (Math.random() < 0.5) {
+
+      sensor = {
+        order: 1,
+        K: rand(0.6, 1.8),
+        tau: rand(0.6, 4.5),
+        mode: Math.random() < 0.3 ? "sine" : "step",
+        omega: 1.5
+      };
+
+    } else {
+
+      sensor = {
+        order: 2,
+        zeta: rand(0.2, 1.5),
+        wn: rand(1.0, 3.5)
+      };
+    }
+
+    const isFirst = sensor.order === 1;
+
+    $("firstFields").hidden = !isFirst;
+    $("secondFields").hidden = isFirst;
+
+    $("sensorInfo").textContent = isFirst
+      ? (
+          sensor.mode === "sine"
+            ? "First-order | Sine input: ω = 1.5 rad/s"
+            : "First-order | Unit step input"
+        )
+      : "Second-order | Unit step input";
+
+    // Choose the plot duration
+    const duration = isFirst
+      ? (
+          sensor.mode === "sine"
+            ? 6 * Math.PI / sensor.omega
+            : Math.max(12, 5 * sensor.tau)
+        )
+      : Math.max(10, 10 / sensor.wn);
+
+    timePoints = [];
+    measuredPoints = [];
+
+    // Generate noisy measurements
+    for (let i = 0; i <= 300; i++) {
+
+      const t = duration * i / 300;
+
+      timePoints.push(t);
+
+      measuredPoints.push(
+        responseAt(t, sensor) + rand(-0.015, 0.015)
+      );
+    }
+
+    // Reset the current round
+    ["kGuess", "tauGuess", "zetaGuess", "wnGuess"]
+      .forEach(id => {
+        $(id).value = "";
+      });
+
+    $("hintText").hidden = true;
+    $("hintText").textContent = "";
+
+    $("resultText").textContent =
+      "Submit your guess to reveal the answer.";
+
+    $("resultText").className = "result";
+    $("checkBtn").disabled = false;
+
+    roundScored = false;
+
+    plotRound();
+  }
+
+  // Check that the input is a positive number
+  function validNumber(id) {
+
+    const raw = $(id).value.trim();
+    const value = Number(raw);
+
+    return raw !== "" &&
+      Number.isFinite(value) &&
+      value > 0
+        ? value
+        : null;
+  }
+
+  // Check the prediction and update score
+  function checkGuess() {
+
+    if (roundScored) return;
+
+    const isFirst = sensor.order === 1;
+
+    const a = validNumber(
+      isFirst ? "kGuess" : "zetaGuess"
+    );
+
+    const b = validNumber(
+      isFirst ? "tauGuess" : "wnGuess"
+    );
+
+    if (a === null || b === null) {
+
+      $("resultText").textContent =
+        "Please enter positive numbers for both parameters.";
+
+      $("resultText").className = "result bad";
+      return;
+    }
+
+    const trueA = isFirst ? sensor.K : sensor.zeta;
+    const trueB = isFirst ? sensor.tau : sensor.wn;
+
+    const errorA =
+      100 * Math.abs(a - trueA) / trueA;
+
+    const errorB =
+      100 * Math.abs(b - trueB) / trueB;
+
+    const fullMarks =
+      errorA <= 10 && errorB <= 10;
+
+    const guessed = isFirst
+      ? {
+          order: 1,
+          K: a,
+          tau: b,
+          mode: sensor.mode,
+          omega: sensor.omega
+        }
+      : {
+          order: 2,
+          zeta: a,
+          wn: b
+        };
+
+    rounds++;
+
+    if (fullMarks) {
+      wins++;
+      totalPoints += 100;
+    }
+
+    roundScored = true;
+    $("checkBtn").disabled = true;
+
+    const nameA = isFirst ? "K" : "ζ";
+    const nameB = isFirst ? "τ" : "ωn";
+
+    // Reveal actual parameters and errors
+   $("resultText").textContent =
+    "True " + nameA + ": " + trueA.toFixed(3) + " | " +
+    "Guess: " + a.toFixed(3) + " | " +
+    "Error: " + errorA.toFixed(1) + "%. " +
+    "True " + nameB + ": " + trueB.toFixed(3) + " | " +
+    "Guess: " + b.toFixed(3) + " | " +
+    "Error: " + errorB.toFixed(1) + "%. " +
+    (fullMarks
+        ? "Full marks: 100 points!"
+        : "0 points this round.");
+
+    $("resultText").className =
+      fullMarks ? "result good" : "result bad";
+
+    $("scoreText").textContent =
+    "Rounds: " + rounds + " | " +
+    "Full-mark rounds: " + wins + " | " +
+    "Total points: " + totalPoints;
+    plotRound(guessed);
+  }
+
+  // Show a hint without revealing the true values
+  function showHint() {
+
+    if (sensor.order === 1) {
+
+      $("hintText").textContent =
+        sensor.mode === "step"
+          ? "Hint: K is the final output. τ is the time to reach 63.2% of that value."
+          : "Hint: For sine input, use the output amplitude and phase lag at the stated ω.";
+
+    } else {
+
+      $("hintText").textContent =
+        "Hint: Overshoot helps estimate ζ; peak time helps estimate ωn when the response oscillates.";
+    }
+
+    $("hintText").hidden = false;
+  }
+
+  // Button events
+  $("checkBtn").addEventListener("click", checkGuess);
+
+  $("hintBtn").addEventListener("click", showHint);
+
+  $("newSensorBtn").addEventListener("click", newSensor);
+
+  // Start the first round
+  newSensor();
+
+</script>
+</body>
+</html>
