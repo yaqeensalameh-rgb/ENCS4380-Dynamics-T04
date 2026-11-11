@@ -1,0 +1,971 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2: First-Order Frequency Response</title>
+
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff5fa;
+            color: #493444;
+            margin: 0;
+            padding: 25px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #c04483;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #87677b;
+            margin: 0 auto 30px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #f2c9dd;
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(192, 68, 131, 0.07);
+        }
+
+        h2 {
+            color: #bd4784;
+            margin-top: 0;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #f8d8e8;
+            padding-bottom: 10px;
+            font-size: 21px;
+        }
+
+        h3 {
+            color: #bd4784;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .parameter {
+            margin: 22px 0;
+        }
+
+        .parameter label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .parameter-value {
+            color: #b63e7e;
+            white-space: nowrap;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #d65b9b;
+            cursor: pointer;
+        }
+
+        input[type="number"] {
+            padding: 11px;
+            border: 1px solid #e7a9c9;
+            border-radius: 7px;
+            width: 100%;
+            max-width: 250px;
+            font-size: 15px;
+            color: #493444;
+        }
+
+        input[type="number"]:focus {
+            outline: 2px solid #edb6d2;
+            border-color: #cb5592;
+        }
+
+        .prediction-area {
+            background: #fff4f9;
+            border: 1px solid #f0c1d9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .prediction-area p {
+            margin-top: 0;
+        }
+
+        button {
+            background: #cb5592;
+            color: white;
+            border: none;
+            padding: 11px 24px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-top: 12px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #a93d75;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 15px;
+        }
+
+        .result-box {
+            background: #fff4f9;
+            border: 1px solid #f2c9dd;
+            border-radius: 10px;
+            padding: 17px;
+            min-width: 0;
+        }
+
+        .result-box p {
+            margin: 0 0 8px;
+            color: #80556d;
+            font-size: 14px;
+        }
+
+        .result-box strong {
+            font-size: 22px;
+            color: #b63e7e;
+            overflow-wrap: anywhere;
+        }
+
+        .validation-box {
+            background: #fffafd;
+            border: 1px solid #f2c9dd;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .validation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .validation-item {
+            background: #fff4f9;
+            border: 1px solid #f2c9dd;
+            border-radius: 8px;
+            padding: 13px;
+        }
+
+        .validation-item p {
+            margin: 0 0 5px;
+            color: #80556d;
+            font-size: 14px;
+        }
+
+        .validation-item strong {
+            color: #a83f77;
+            font-size: 17px;
+        }
+
+        .validation-result {
+            border-top: 1px solid #f2c9dd;
+            padding-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pass {
+            color: #25834b;
+            font-weight: bold;
+        }
+
+        .fail {
+            color: #c0395b;
+            font-weight: bold;
+        }
+
+        .plot {
+            width: 100%;
+            min-height: 350px;
+        }
+
+        .formula {
+            background: #fff4f9;
+            padding: 14px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            margin: 12px 0;
+            color: #a83f77;
+            border: 1px solid #f5d7e6;
+        }
+
+        .note {
+            color: #87677b;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .prediction-feedback {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #f2c9dd;
+        }
+
+        .prediction-feedback p {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            h2 {
+                font-size: 19px;
+            }
+
+            .plot {
+                min-height: 290px;
+            }
+
+            .validation-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .parameter label {
+                font-size: 14px;
+            }
+
+            .result-box strong {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Module 2: First-Order Frequency Response</h1>
+
+    <!-- System Parameters -->
+    <div class="card">
+        <h2>1. System Parameters</h2>
+
+        <div class="parameter">
+            <label>
+                <span>Time Constant (τ)</span>
+                <span class="parameter-value" id="tauValue">0.20 s</span>
+            </label>
+
+            <input
+                type="range"
+                id="tauSlider"
+                min="0.01"
+                max="1"
+                step="0.01"
+                value="0.20"
+            >
+        </div>
+
+        <div class="parameter">
+            <label>
+                <span>Input Angular Frequency (ω)</span>
+                <span class="parameter-value" id="omegaValue">2.0 rad/s</span>
+            </label>
+
+            <input
+                type="range"
+                id="omegaSlider"
+                min="0.1"
+                max="20"
+                step="0.1"
+                value="2"
+            >
+        </div>
+    </div>
+
+    <!-- Prediction -->
+    <div class="card">
+        <h2>2. Predict, Then Check</h2>
+
+        <div class="prediction-area">
+
+            <p>
+                Predict the Amplitude Ratio (M) before checking the actual result.
+            </p>
+
+            <label for="predictionInput">Your Prediction:</label>
+
+            <br><br>
+
+            <input
+                type="number"
+                id="predictionInput"
+                min="0"
+                max="1"
+                step="0.0001"
+                placeholder="Enter a value between 0 and 1"
+            >
+
+            <br>
+
+            <button onclick="checkPrediction()">
+                Check Prediction
+            </button>
+
+            <div class="prediction-feedback">
+
+                <p>
+                    Actual Value:
+                    <strong id="actualPrediction">--</strong>
+                </p>
+
+                <p>
+                    Prediction Result:
+                    <strong id="predictionResult">Not Checked</strong>
+                </p>
+
+            </div>
+
+            <p class="note">
+                A prediction within ±0.05 of the actual value is considered correct.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- System Response -->
+    <div class="card">
+        <h2>3. System Response</h2>
+
+        <div class="formula">
+            Amplitude Ratio: M = 1 / √(1 + (ωτ)²)
+        </div>
+
+        <div class="formula">
+            Phase Angle: φ = -tan⁻¹(ωτ)
+        </div>
+
+        <div id="responsePlot" class="plot"></div>
+    </div>
+
+    <!-- Frequency Response -->
+    <div class="card">
+        <h2>4. Frequency Response</h2>
+
+        <div class="formula">
+            Cutoff Frequency: ωc = 1 / τ
+        </div>
+
+        <div id="bodePlot" class="plot"></div>
+        <h3>Bode Phase Plot</h3>
+        <div id="bodePhasePlot" class="plot"></div>
+    </div>
+
+    <!-- Current System Results -->
+    <div class="card">
+        <h2>5. Current System Results</h2>
+
+        <div class="result-grid">
+
+            <div class="result-box">
+                <p>Amplitude Ratio (M)</p>
+                <strong id="amplitudeRatio">Hidden until prediction</strong>
+            </div>
+
+            <div class="result-box">
+                <p>Phase Lag</p>
+                <strong id="phaseLag">--</strong>
+            </div>
+
+            <div class="result-box">
+                <p>Dynamic Error (δ = M - 1)</p>
+                <strong id="dynamicError">--</strong>
+            </div>
+
+            <div class="result-box">
+                <p>Dynamic Error Magnitude</p>
+                <strong id="dynamicErrorMagnitude">--</strong>
+            </div>
+
+            <div class="result-box">
+                <p>Cutoff Frequency (ωc)</p>
+                <strong id="cutoffFrequency">--</strong>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Validation Checks -->
+    <div class="card">
+        <h2>6. Frequency Response Validation</h2>
+
+        <!-- Validation Check 2 -->
+        <div class="validation-box">
+
+            <h3>Frequency Response Accuracy</h3>
+
+            <div class="validation-grid">
+
+                <div class="validation-item">
+                    <p>Time Constant (τ)</p>
+                    <strong>0.20 s</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Input Angular Frequency (ω)</p>
+                    <strong>2 rad/s</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Expected Amplitude Ratio</p>
+                    <strong>0.93</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Actual Value</p>
+                    <strong id="validation2M">--</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Expected Phase Lag</p>
+                    <strong>21.8°</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Actual Value</p>
+                    <strong id="validation2Phase">--</strong>
+                </div>
+
+            </div>
+
+            <div class="validation-result">
+                <strong>Validation Result:</strong>
+                <strong id="validation2Result">--</strong>
+            </div>
+
+        </div>
+
+        <!-- Validation Check 3 -->
+        <div class="validation-box" style="margin-top: 20px;">
+
+            <h3>Dynamic Error Limit and Phase Lag</h3>
+
+            <div class="validation-grid">
+
+                <div class="validation-item">
+                    <p>Maximum Signal Frequency</p>
+                    <strong>100 Hz</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Expected Maximum Time Constant</p>
+                    <strong>0.52 ms</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Actual Maximum Time Constant</p>
+                    <strong id="validationTau">--</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Maximum Dynamic Error</p>
+                    <strong>5%</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Actual Value</p>
+                    <strong id="validationError">--</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Expected Phase Lag at 50 Hz</p>
+                    <strong>9.3°</strong>
+                </div>
+
+                <div class="validation-item">
+                    <p>Actual Value</p>
+                    <strong id="validationPhase">--</strong>
+                </div>
+
+            </div>
+
+            <div class="validation-result">
+                <strong>Validation Result:</strong>
+                <strong id="validationResult">--</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    const tauSlider = document.getElementById("tauSlider");
+    const omegaSlider = document.getElementById("omegaSlider");
+
+    let currentM = 0;
+
+    // Update system calculations and plots
+    function updateSystem() {
+
+        let tau = parseFloat(tauSlider.value);
+        let omega = parseFloat(omegaSlider.value);
+
+        // Calculate amplitude ratio
+        let M = 1 / Math.sqrt(1 + Math.pow(omega * tau, 2));
+
+        // Calculate phase lag in degrees
+        let phase = Math.atan(omega * tau) * 180 / Math.PI;
+
+        // Calculate dynamic error
+        let dynamicError = M - 1;
+        let dynamicErrorMagnitude = Math.abs(dynamicError) * 100;
+
+        // Calculate cutoff frequency
+        let cutoff = 1 / tau;
+
+        currentM = M;
+
+        // Update parameter labels
+        document.getElementById("tauValue").textContent =
+            tau.toFixed(2) + " s";
+
+        document.getElementById("omegaValue").textContent =
+            omega.toFixed(1) + " rad/s";
+
+        // Update current system results
+        document.getElementById("amplitudeRatio").textContent =
+            "Hidden until prediction";
+
+        document.getElementById("phaseLag").textContent =
+            phase.toFixed(2) + "°";
+
+        document.getElementById("dynamicError").textContent =
+            dynamicError.toFixed(4);
+
+        document.getElementById("dynamicErrorMagnitude").textContent =
+            dynamicErrorMagnitude.toFixed(2) + "%";
+
+        document.getElementById("cutoffFrequency").textContent =
+            cutoff.toFixed(2) + " rad/s";
+
+        // Reset prediction when parameters change
+        document.getElementById("actualPrediction").textContent = "--";
+
+        document.getElementById("predictionResult").textContent =
+            "Not Checked";
+
+        document.getElementById("predictionResult").className = "";
+
+        // Update graphs
+        updateResponsePlot(omega, M, phase);
+        updateBodePlot(tau);
+    }
+
+    // Draw input and output signals
+    function updateResponsePlot(omega, M, phase) {
+
+        let time = [];
+        let input = [];
+        let output = [];
+
+        let totalTime = 10;
+
+        for (let i = 0; i <= 300; i++) {
+
+            let t = i * totalTime / 300;
+
+            time.push(t);
+
+            input.push(Math.sin(omega * t));
+
+            output.push(
+                M * Math.sin(omega * t - phase * Math.PI / 180)
+            );
+        }
+
+        let data = [
+            {
+                x: time,
+                y: input,
+                type: "scatter",
+                mode: "lines",
+                name: "Input Signal",
+                line: {
+                    color: "#d65b9b",
+                    width: 2
+                }
+            },
+            {
+                x: time,
+                y: output,
+                type: "scatter",
+                mode: "lines",
+                name: "Output Signal",
+                line: {
+                    color: "#7b5aa6",
+                    width: 2
+                }
+            }
+        ];
+
+        let layout = {
+            title: {
+                text: "Input and Output Signals",
+                font: { color: "#493444", size: 17 }
+            },
+            xaxis: {
+                title: "Time (s)",
+                gridcolor: "#f5e3ed"
+            },
+            yaxis: {
+                title: "Amplitude",
+                gridcolor: "#f5e3ed",
+                range: [-1.2, 1.2]
+            },
+            paper_bgcolor: "white",
+            plot_bgcolor: "#fffafd",
+            font: {
+                family: "Arial, sans-serif",
+                color: "#493444"
+            },
+            legend: {
+                orientation: "h",
+                y: -0.2
+            },
+            margin: {
+                t: 55,
+                b: 75,
+                l: 55,
+                r: 20
+            }
+        };
+
+        Plotly.react("responsePlot", data, layout, {
+            responsive: true,
+            displaylogo: false
+        });
+    }
+
+    // Draw Bode magnitude plot
+    function updateBodePlot(tau) {
+
+        let frequencies = [];
+        let magnitudes = [];
+        let phases = [];
+
+        for (let i = -2; i <= 3; i += 0.05) {
+
+            let omega = Math.pow(10, i);
+
+            let M = 1 / Math.sqrt(
+                1 + Math.pow(omega * tau, 2)
+            );
+
+            frequencies.push(omega);
+            magnitudes.push(20 * Math.log10(M));
+            phases.push(
+            -Math.atan(omega * tau) * 180 / Math.PI
+            );
+        }
+
+        let cutoff = 1 / tau;
+
+        let data = [
+            {
+                x: frequencies,
+                y: magnitudes,
+                type: "scatter",
+                mode: "lines",
+                name: "Magnitude",
+                line: {
+                    color: "#d65b9b",
+                    width: 3
+                }
+            },
+            {
+                x: [cutoff, cutoff],
+                y: [-60, 1],
+                type: "scatter",
+                mode: "lines",
+                name: "Cutoff Frequency",
+                line: {
+                    color: "#7b5aa6",
+                    dash: "dash",
+                    width: 2
+                }
+            }
+        ];
+
+        let layout = {
+            title: {
+                text: "Bode Magnitude Plot",
+                font: { color: "#493444", size: 17 }
+            },
+            xaxis: {
+                title: "Angular Frequency (rad/s)",
+                type: "log",
+                gridcolor: "#f5e3ed"
+            },
+            yaxis: {
+                title: "Magnitude (dB)",
+                gridcolor: "#f5e3ed",
+                range: [-60, 5]
+            },
+            paper_bgcolor: "white",
+            plot_bgcolor: "#fffafd",
+            font: {
+                family: "Arial, sans-serif",
+                color: "#493444"
+            },
+            legend: {
+                orientation: "h",
+                y: -0.2
+            },
+            margin: {
+                t: 55,
+                b: 75,
+                l: 60,
+                r: 20
+            }
+        };
+
+        Plotly.react("bodePlot", data, layout, {
+            responsive: true,
+            displaylogo: false
+        });
+        Plotly.react("bodePhasePlot", [
+    {
+        x: frequencies,
+        y: phases,
+        type: "scatter",
+        mode: "lines",
+        name: "Phase",
+        line: {
+            color: "#7b5aa6",
+            width: 3
+        }
+    },
+    {
+        x: [cutoff, cutoff],
+        y: [-90, 0],
+        type: "scatter",
+        mode: "lines",
+        name: "Cutoff Frequency",
+        line: {
+            color: "#d65b9b",
+            dash: "dash",
+            width: 2
+        }
+    }
+], {
+    title: "Bode Phase Plot",
+    xaxis: {
+        title: "Angular Frequency (rad/s)",
+        type: "log"
+    },
+    yaxis: {
+        title: "Phase (degrees)",
+        range: [-95, 5]
+    },
+    paper_bgcolor: "white",
+    plot_bgcolor: "#fffafd"}, {responsive: true,
+    displaylogo: false});
+    }
+
+    // Check amplitude ratio prediction
+    function checkPrediction() {
+
+    const predictionInput =
+        document.getElementById("predictionInput");
+
+    const predictionResult =
+        document.getElementById("predictionResult");
+
+    const actualPrediction =
+        document.getElementById("actualPrediction");
+
+    const amplitudeRatio =
+        document.getElementById("amplitudeRatio");
+
+    const prediction = Number(predictionInput.value);
+
+    if (
+        predictionInput.value.trim() === "" ||
+        !Number.isFinite(prediction) ||
+        prediction < 0 ||
+        prediction > 1
+    ) {
+        predictionResult.textContent =
+            "Please enter a value between 0 and 1.";
+
+        predictionResult.className = "fail";
+        actualPrediction.textContent = "--";
+        amplitudeRatio.textContent = "Hidden until prediction";
+        return;
+    }
+
+    // Reveal the actual value after a valid prediction.
+    actualPrediction.textContent = currentM.toFixed(4);
+    amplitudeRatio.textContent = currentM.toFixed(4);
+
+    const difference = Math.abs(prediction - currentM);
+
+    if (difference <= 0.05) {
+        predictionResult.textContent =
+            "Correct! Good prediction.";
+        predictionResult.className = "pass";
+    } else {
+        predictionResult.textContent =
+            "Not quite. Try again!";
+        predictionResult.className = "fail";
+    }
+}
+
+    // Fixed Validation Check 2
+    function updateValidation2() {
+
+        let tau = 0.2;
+        let omega = 2;
+
+        // Calculate amplitude ratio
+        let M = 1 / Math.sqrt(
+            1 + Math.pow(omega * tau, 2)
+        );
+
+        // Calculate phase lag
+        let phase = Math.atan(omega * tau) * 180 / Math.PI;
+
+        document.getElementById("validation2M").textContent =
+            M.toFixed(4);
+
+        document.getElementById("validation2Phase").textContent =
+            phase.toFixed(2) + "°";
+
+        let result = document.getElementById("validation2Result");
+
+        if (
+            Math.abs(M - 0.93) <= 0.01 &&
+            Math.abs(phase - 21.8) <= 0.2
+        ) {
+
+            result.textContent = "PASS";
+            result.className = "pass";
+
+        } else {
+
+            result.textContent = "FAIL";
+            result.className = "fail";
+        }
+    }
+
+    // Fixed Validation Check 3
+    function updateValidation3() {
+
+        // Maximum signal frequency is 100 Hz
+        let maxFrequency = 100;
+
+        // Convert frequency to angular frequency
+        let omegaMax = 2 * Math.PI * maxFrequency;
+
+        // Maximum allowed dynamic error is 5%
+        let maxM = 0.95;
+
+        // Calculate maximum time constant
+        let maxTau = Math.sqrt(
+            (1 / Math.pow(maxM, 2)) - 1
+        ) / omegaMax;
+
+        // Calculate phase lag at 50 Hz
+        let omega50 = 2 * Math.PI * 50;
+
+        let phase50 = Math.atan(
+            omega50 * maxTau
+        ) * 180 / Math.PI;
+
+        // Calculate dynamic error at 100 Hz
+        let M100 = 1 / Math.sqrt(
+            1 + Math.pow(omegaMax * maxTau, 2)
+        );
+
+        let error = (1 - M100) * 100;
+
+        document.getElementById("validationTau").textContent =
+            (maxTau * 1000).toFixed(2) + " ms";
+
+        document.getElementById("validationError").textContent =
+            error.toFixed(2) + "%";
+
+        document.getElementById("validationPhase").textContent =
+            phase50.toFixed(1) + "°";
+
+        let result = document.getElementById("validationResult");
+
+        if (
+            Math.abs(maxTau * 1000 - 0.52) < 0.02 &&
+            Math.abs(error - 5) < 0.01 &&
+            Math.abs(phase50 - 9.3) < 0.2
+        ) {
+
+            result.textContent = "PASS";
+            result.className = "pass";
+
+        } else {
+
+            result.textContent = "FAIL";
+            result.className = "fail";
+
+        }
+    }
+
+    // Update system when sliders change
+    tauSlider.addEventListener("input", updateSystem);
+    omegaSlider.addEventListener("input", updateSystem);
+
+    // Initial calculations
+    updateSystem();
+    updateValidation2();
+    updateValidation3();
+
+</script>
+
+</body>
+</html>
