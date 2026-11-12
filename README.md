@@ -59,3 +59,55 @@ AI tools were used for assistance with code development, debugging, and code exp
 ![Module 3 - Screenshot 1](Module3_1.png)
 
 ![Module 3 - Screenshot 2](Module3_2.png)
+
+## Learning Objectives
+
+### Module 1 – First-Order Time Response
+- Understand the meaning and importance of the time constant (τ).
+- Identify the 63.2% response point at t = τ.
+- Understand the 95% response point at t = 3τ.
+- Compare step and ramp input responses.
+- Analyze the effect of τ on sensor response speed.
+- Understand the steady-state error and ramp lag.
+
+### Module 2 – First-Order Frequency Response
+- Understand how a first-order sensor responds to sinusoidal inputs.
+- Calculate the amplitude ratio and phase lag.
+- Explore the relationship between input frequency and output amplitude.
+- Understand the cutoff frequency (ω = 1/τ).
+- Interpret the Bode magnitude and phase plots.
+- Calculate the dynamic error of a sensor.
+
+### Module 3 – Second-Order Response
+- Understand the effect of damping ratio (ζ) and natural frequency (ωn).
+- Compare underdamped, critically damped, and overdamped responses.
+- Analyze rise time, peak time, maximum overshoot, and settling time.
+- Understand the relationship between system poles and response behavior.
+- Explore the mass-spring-damper system using state-space representation.
+- Observe the system trajectory in the phase plane.
+
+### Module 4 – Guess the Sensor
+- Develop the ability to identify unknown sensor characteristics from response curves.
+- Estimate the time constant (τ) of a first-order system.
+- Estimate the damping ratio (ζ) and natural frequency (ωn) of a second-order system.
+- Use overshoot and peak time to analyze second-order responses.
+- Compare estimated parameters with the actual hidden values.
+- Improve understanding through interactive challenges and scoring.
+
+## How to Use the Toolkit
+
+1. Open the Live Demo using the link provided above.
+2. Select one of the four available modules.
+3. Adjust the sliders to change system parameters where available.
+4. Observe the response curves and plots.
+5. Use the prediction section to estimate the expected behavior before checking the result.
+6. Compare the results with the theoretical values and validation checks.
+
+## Project Learning Outcomes
+
+By completing this toolkit, users can:
+- Explain the dynamic behavior of first-order and second-order systems.
+- Predict sensor responses to different input signals.
+- Interpret time-domain and frequency-domain characteristics.
+- Estimate unknown system parameters from response curves.
+- Understand the connection between mathematical models, plots, and real sensor behavior.
