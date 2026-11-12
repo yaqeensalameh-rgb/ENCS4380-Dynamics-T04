@@ -1,9 +1,6 @@
-# ENCS4380 – Dynamic Characteristics Interactive Toolkit
+# Dynamic Characteristics Interactive Toolkit
 
 An interactive web-based toolkit developed for ENCS4380 – Interfacing Techniques at Birzeit University.
-
-**Instructor:** Dr. Wasel Ghanem
-
 ## Live Demo
 
 [Open the Interactive Toolkit](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/)
