@@ -18,8 +18,6 @@ This project helps users understand the dynamic characteristics of sensors throu
 ## Modules
 
 - **[Module 1 – First-Order Time Response](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/First_Order_time_Response_M1.html):** Explores step and ramp responses and the effect of the time constant (τ).
-- ### Module 1 – First-Order Time Response
-![Module 1](module1.png)
 - **[Module 2 – First-Order Frequency Response](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module2%20%282%29.html):** Demonstrates amplitude ratio, phase lag, Bode plots, and dynamic error.
 - **[Module 3 – Second-Order Response](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module3.html):** Explores damping conditions, response characteristics, poles, and state-space modeling.
 - **[Module 4 – Guess the Sensor](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module4.html):** Challenges users to estimate unknown sensor parameters from response curves.
@@ -47,3 +45,17 @@ The toolkit includes all six validation checks specified in the homework instruc
 ## AI Usage
 
 AI tools were used for assistance with code development, debugging, and code explanations. All implementations were reviewed and tested by the team.
+## Screenshots
+
+### Module 1 – First-Order Time Response
+![Module 1](Module1.png)
+
+### Module 2 – First-Order Frequency Response
+![Module 2 - Screenshot 1](Module2_1.png)
+
+![Module 2 - Screenshot 2](Module2_2.png)
+
+### Module 3 – Second-Order Response
+![Module 3 - Screenshot 1](Module3_1.png)
+
+![Module 3 - Screenshot 2](Module3_2.png)
