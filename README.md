@@ -15,6 +15,16 @@ An interactive web-based toolkit developed for ENCS4380 – Interfacing Techniqu
 
 This project helps users understand the dynamic characteristics of sensors through interactive simulations, real-time plots, and parameter adjustments.
 
+## How to Use the Toolkit
+
+1. Open the Live Demo using the link provided above.
+2. Select one of the four available modules.
+3. Adjust the sliders to change system parameters where available.
+4. Observe the response curves and plots.
+5. Use the prediction section to estimate the expected behavior before checking the result.
+6. Compare the results with the theoretical values and validation checks.
+
+
 ## Modules
 
 - **[Module 1 – First-Order Time Response](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/First_Order_time_Response_M1.html):** Explores step and ramp responses and the effect of the time constant (τ).
@@ -94,14 +104,6 @@ AI tools were used for assistance with code development, debugging, and code exp
 - Compare estimated parameters with the actual hidden values.
 - Improve understanding through interactive challenges and scoring.
 
-## How to Use the Toolkit
-
-1. Open the Live Demo using the link provided above.
-2. Select one of the four available modules.
-3. Adjust the sliders to change system parameters where available.
-4. Observe the response curves and plots.
-5. Use the prediction section to estimate the expected behavior before checking the result.
-6. Compare the results with the theoretical values and validation checks.
 
 ## Project Learning Outcomes
 
