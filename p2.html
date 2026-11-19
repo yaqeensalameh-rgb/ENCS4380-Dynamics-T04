@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P2 - A Slow Sensor in the Loop</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--bg:#fff7fa;--primary:#e87aa6;--dark:#c2185b;--soft:#fde8f1;--text:#3a2a33;--muted:#96808c;--border:#f6dce8;--green:#23834b;--red:#c53d48}
+*{box-sizing:border-box;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
+nav.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 16px}
+nav.top b{color:var(--dark);margin-right:10px;font-size:14px}
+nav.top a{color:#85707b;text-decoration:none;font-size:12px;padding:7px 10px;border-radius:8px}
+nav.top a:hover{background:var(--soft);color:var(--dark)}
+nav.top a.nx{margin-left:auto;background:var(--soft);color:var(--dark);font-weight:700}
+main{max-width:1100px;margin:auto;padding:28px 16px 40px}
+.eyebrow{color:var(--dark);font-size:11px;font-weight:700;letter-spacing:1.4px}
+h1{font-size:28px;margin:8px 0;color:#7a1141}
+h2{font-size:17px;margin:0 0 4px}
+.sn{font-size:10px;color:var(--primary);font-weight:700;letter-spacing:1.2px}
+.card{background:#fff;border:1px solid var(--border);border-radius:15px;padding:22px;margin-bottom:18px;box-shadow:0 5px 22px rgba(194,24,91,.05);scroll-margin-top:70px}
+.muted{color:var(--muted);font-size:12px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:16px}
+.field{display:flex;flex-direction:column;gap:8px}
+label{font-size:12px;font-weight:600;color:#5a4650}
+input,select{width:100%;padding:10px 12px;border:1px solid #f0d6e2;border-radius:9px;background:#fff;color:var(--text);font-size:13px;outline:none}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,122,166,.18)}
+input[type=range]{padding:0;accent-color:var(--dark)}
+.value{color:var(--dark);font-weight:700}
+.prediction-card{background:linear-gradient(135deg,#fff5f9,#fff)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;margin-top:12px}
+.opt{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;font-size:12px}
+.opt:has(input:checked){border-color:var(--primary);background:var(--soft);color:var(--dark)}
+.opt input{width:auto;accent-color:var(--dark)}
+.status{padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:9px;margin-top:14px;font-size:12px;line-height:1.7;color:#6e5a65}
+.status.success{border-color:#c5e5d1;background:#f3fbf5;color:var(--green)}
+.status.warning{border-color:#f0dfc3;background:#fffaf1;color:#946b2c}
+.status.bad{border-color:#f0c5ca;background:#fff4f5;color:var(--red)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:none;border-radius:9px;padding:11px 19px;background:var(--dark);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+button:hover{background:#a3144d}
+button.secondary{background:var(--soft);color:var(--dark)}
+.plot{width:100%;height:380px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.metric{background:#fff8fb;border:1px solid #f9e1ec;padding:16px;border-radius:11px}
+.metric-name{font-size:11px;color:var(--muted)}
+.metric-number{font-size:21px;font-weight:800;color:var(--dark);margin-top:8px}
+.hidden{display:none!important}
+svg.diag{width:100%;max-width:780px;display:block;margin:10px auto}
+svg .bx{fill:var(--soft);stroke:var(--primary);stroke-width:1.5}
+svg .sx{fill:#fff0f5;stroke:var(--dark);stroke-width:2;stroke-dasharray:5 3}
+svg .ln{stroke:var(--dark);fill:none;stroke-width:2}
+svg text{font-size:13px;fill:#7a1141;font-weight:700;text-anchor:middle;font-family:inherit}
+footer{text-align:center;padding:20px 0;border-top:1px solid var(--border);margin-top:28px}
+@media(max-width:650px){.metrics{grid-template-columns:repeat(2,1fr)}.plot{height:310px}h1{font-size:23px}nav.top a.nx{margin-left:0}}
+</style>
+</head>
+<body>
+<nav class="top">
+  <b>∿ Dynamics Toolkit · Control</b>
+  <a href="p1.html">← P1 Playground</a><a href="#setup">Setup</a><a href="#prediction">Predict</a><a href="#response">Response</a><a href="#sweep">Sweep</a><a href="#diagram">Diagram</a>
+  <a class="nx" href="p3.html">Next: P3 Digital PID →</a>
+</nav>
+
+<main>
+<header>
+  <div class="eyebrow">HOMEWORK 2 · MODULE P2</div>
+  <h1>A Slow Sensor in the Loop</h1>
+  <p class="muted">The controller can only control what the sensor <b>reports</b>, not the true output. A slow sensor (time constant τs) delays that report. Increase τs and watch the true output overshoot, then oscillate.</p>
+</header>
+
+<section class="card" id="setup">
+  <div class="sn">01 · SETUP</div><h2>Plant, Sensor and Controller</h2>
+  <div class="grid">
+    <div class="field"><label>Plant gain K: <span class="value" id="KVal"></span></label><input id="K" type="range" min="0.5" max="3" step="0.1" value="1"></div>
+    <div class="field"><label>Plant time constant τ: <span class="value" id="tauVal"></span> s</label><input id="tau" type="range" min="0.5" max="10" step="0.5" value="1"></div>
+    <div class="field"><label>Sensor time constant τs: <span class="value" id="tausVal"></span> s <span class="muted">(0 = ideal sensor)</span></label><input id="taus" type="range" min="0" max="3" step="0.05" value="0.5"></div>
+  </div>
+  <div class="grid">
+    <div class="field"><label for="Kp">Kp</label><input id="Kp" type="number" min="0" step="0.1" value="5"></div>
+    <div class="field"><label for="Ki">Ki</label><input id="Ki" type="number" min="0" step="0.1" value="10"></div>
+    <div class="field"><label for="Kd">Kd</label><input id="Kd" type="number" min="0" step="0.1" value="0"></div>
+  </div>
+  <div class="grid">
+    <div class="field"><label for="setpoint">Setpoint</label><input id="setpoint" type="number" value="1" step="0.1"></div>
+    <div class="field"><label for="limit">Control Limit (±)</label><input id="limit" type="number" value="10" min="0.1" step="0.5"></div>
+    <div class="field"><label for="duration">Duration (s)</label><input id="duration" type="number" value="20" min="5" max="30" step="1"></div>
+  </div>
+  <p class="muted" style="margin-top:14px">Plant: G(s) = K/(τs+1) · Sensor: H(s) = 1/(τs·s+1) · Control: u = Kp·e + Ki·∫e − Kd·dys/dt, where e = r − ys (ys = sensor reading).</p>
+  <div class="actions"><button id="runBtn">▶ Run Simulation</button><button class="secondary" id="resetBtn">Reset</button></div>
+  <div id="message" class="status">Plots update automatically when you change a value.</div>
+</section>
+
+<section class="card prediction-card" id="prediction">
+  <div class="sn">02 · INTERACTIVE LEARNING</div><h2>Predict, Then Check</h2>
+  <p class="muted">Question: what happens to the overshoot of the <b>true</b> output when the sensor gets slower (τs increases)? Lock your prediction, then increase τs.</p>
+  <div class="opts">
+    <label class="opt"><input type="radio" name="prediction" value="more">More overshoot</label>
+    <label class="opt"><input type="radio" name="prediction" value="less">Less overshoot</label>
+    <label class="opt"><input type="radio" name="prediction" value="same">No significant change</label>
+  </div>
+  <div class="actions"><button class="secondary" id="lockBtn">Lock Prediction</button></div>
+  <div id="predictionResult" class="status">Choose a prediction and lock it.</div>
+</section>
+
+<section class="card" id="response">
+  <div class="sn">03 · OUTPUT</div><h2>True Output vs. Sensor Reading</h2>
+  <div id="outPlot" class="plot"></div>
+  <div id="oscNote" class="status">–</div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-name">Rise Time (true output)</div><div class="metric-number" id="mRise">–</div></div>
+    <div class="metric"><div class="metric-name">Overshoot (true output)</div><div class="metric-number" id="mOS">–</div></div>
+    <div class="metric"><div class="metric-name">Settling Time (±2%)</div><div class="metric-number" id="mSet">–</div></div>
+    <div class="metric"><div class="metric-name">Steady-State Error</div><div class="metric-number" id="mErr">–</div></div>
+  </div>
+  <p class="muted" style="margin-top:12px">Dark line: true output y(t). Pink line: what the sensor reports ys(t). The controller drives ys to the setpoint, so y overshoots while the sensor is still catching up.</p>
+</section>
+
+<section class="card" id="sweep">
+  <div class="sn">04 · SWEEP</div><h2>Overshoot as the Sensor Gets Slower</h2>
+  <p class="muted">Runs the loop for τs from 0 to 3 s with your current gains. Red points mark sustained oscillation.</p>
+  <div class="actions"><button class="secondary" id="sweepBtn">Run τs Sweep</button></div>
+  <div id="sweepPlot" class="plot"></div>
+</section>
+
+<section class="card" id="diagram">
+  <div class="sn">05 · STRUCTURE</div><h2>Closed Loop with a Sensor in the Feedback Path</h2>
+  <svg class="diag" viewBox="0 0 780 210" role="img" aria-label="Loop with sensor in feedback path">
+    <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c2185b"/></marker></defs>
+    <text x="22" y="72">r(t)</text>
+    <line class="ln" x1="44" y1="80" x2="88" y2="80" marker-end="url(#ah)"/>
+    <circle class="bx" cx="108" cy="80" r="20"/><text x="97" y="76" style="font-size:12px">+</text><text x="100" y="108" style="font-size:16px">−</text>
+    <line class="ln" x1="128" y1="80" x2="188" y2="80" marker-end="url(#ah)"/><text x="158" y="70" style="font-size:11px">e</text>
+    <rect class="bx" x="190" y="50" width="110" height="60" rx="10"/><text x="245" y="86">PID</text>
+    <line class="ln" x1="300" y1="80" x2="360" y2="80" marker-end="url(#ah)"/><text x="330" y="70" style="font-size:11px">u</text>
+    <rect class="bx" x="362" y="50" width="110" height="60" rx="10"/><text x="417" y="86">Plant</text>
+    <line class="ln" x1="472" y1="80" x2="730" y2="80" marker-end="url(#ah)"/><text x="755" y="85">y(t)</text>
+    <polyline class="ln" points="600,80 600,165 560,165" /><circle cx="600" cy="80" r="4" fill="#c2185b"/>
+    <rect class="sx" x="440" y="140" width="120" height="50" rx="10"/><text x="500" y="170">Sensor 1/(τs·s+1)</text>
+    <polyline class="ln" points="440,165 108,165 108,102" marker-end="url(#ah)"/>
+    <text x="270" y="155" style="font-size:11px;font-weight:500">ys(t): what the controller sees</text>
+  </svg>
+</section>
+
+<footer class="muted">ENCS4380 · Homework 2 – PID Control · Module P2</footer>
+</main>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value);
+const fmt = (v, d = 3) => Number.isFinite(v) ? Number(v.toFixed(d)).toString() : "N/A";
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const PINK = "#e87aa6", DARK = "#c2185b";
+
+/* Simulation: plant y' = (-y + K u)/tau ; sensor ys' = (y - ys)/taus  (RK4) */
+function simulate(P, g, s, dt = 0.001) {
+  const steps = Math.ceil(s.duration / dt);
+  const f = (x, u) => [(-x[0] + P.K * u) / P.tau, P.taus > 1e-6 ? (x[0] - x[1]) / P.taus : 0];
+  let x = [0, 0], integral = 0, prev = 0;
+  const T = [], Y = [], YS = [], U = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i * dt, r = s.setpoint;
+    if (P.taus <= 1e-6) x[1] = x[0];
+    const ys = x[1], e = r - ys, dys = (ys - prev) / dt;
+    let raw = g.Kp * e + g.Ki * integral - g.Kd * dys;
+    const pushing = (raw > s.limit && e > 0) || (raw < -s.limit && e < 0);
+    if (!pushing) integral += e * dt;
+    raw = g.Kp * e + g.Ki * integral - g.Kd * dys;
+    const u = clamp(raw, -s.limit, s.limit);
+    T.push(t); Y.push(x[0]); YS.push(ys); U.push(u); prev = ys;
+    if (i < steps) {
+      const add = (a, k, h) => a.map((v, j) => v + h * k[j]);
+      const k1 = f(x, u), k2 = f(add(x, k1, dt / 2), u), k3 = f(add(x, k2, dt / 2), u), k4 = f(add(x, k3, dt), u);
+      x = x.map((v, j) => v + dt / 6 * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j]));
+    }
+  }
+  return { T, Y, YS, U };
+}
+
+function metrics(r, sp) {
+  const { T, Y } = r, n = Y.length, final = Y[n - 1];
+  // Sustained oscillation: peak-to-peak of the last 20% of the run
+  const tail = Y.slice(Math.floor(n * 0.8));
+  const pp = Math.max(...tail) - Math.min(...tail);
+  const osc = pp > 0.05 * Math.abs(sp);
+  const os = Math.max(0, (Math.max(...Y) - sp) / Math.abs(sp) * 100);
+  const cross = lv => { for (let i = 1; i < n; i++) if (Y[i - 1] < lv && Y[i] >= lv) return T[i - 1] + (lv - Y[i - 1]) * (T[i] - T[i - 1]) / (Y[i] - Y[i - 1]); return null; };
+  const t10 = cross(0.1 * sp), t90 = cross(0.9 * sp);
+  const rise = t10 !== null && t90 !== null ? t90 - t10 : null;
+  let settling = null;
+  if (!osc) {
+    const band = 0.02 * Math.abs(final); let last = -1;
+    for (let i = 0; i < n; i++) if (Math.abs(Y[i] - final) > band) last = i;
+    settling = last === -1 ? 0 : (last < n - 1 ? T[last + 1] : null);
+  }
+  return { rise, os, settling, err: Math.abs(sp - final), osc, pp };
+}
+
+const getP = () => ({ K: num("K"), tau: num("tau"), taus: num("taus") });
+const getG = () => ({ Kp: num("Kp"), Ki: num("Ki"), Kd: num("Kd") });
+const getS = () => ({ setpoint: num("setpoint"), limit: num("limit"), duration: num("duration") });
+
+function check(P, g, s) {
+  if ([P.K, P.tau, P.taus, g.Kp, g.Ki, g.Kd, s.setpoint, s.limit, s.duration].some(v => !Number.isFinite(v))) throw new Error("Please enter valid numbers.");
+  if (g.Kp < 0 || g.Ki < 0 || g.Kd < 0 || s.limit <= 0 || s.duration < 1 || s.duration > 30 || s.setpoint === 0) throw new Error("Check gains (≥ 0), limit, duration and a non-zero setpoint.");
+}
+
+const layout = (title, yt, xt = "Time (seconds)") => ({
+  title: { text: title, font: { size: 15, color: "#7a1141" } },
+  xaxis: { title: xt, gridcolor: "#f9e6ee" }, yaxis: { title: yt, gridcolor: "#f9e6ee" },
+  paper_bgcolor: "#fff", plot_bgcolor: "#fff", font: { family: "Segoe UI, Arial", color: "#85707b" },
+  margin: { l: 58, r: 20, t: 50, b: 55 }, legend: { orientation: "h", y: -0.22 }
+});
+const cfg = { responsive: true, displaylogo: false };
+const thin = a => a.filter((_, i) => i % 5 === 0);
+
+let lastM = null;
+function run() {
+  try {
+    if (typeof Plotly === "undefined") throw new Error("Plotly could not load. Check your internet connection.");
+    const P = getP(), g = getG(), s = getS(); check(P, g, s);
+    const r = simulate(P, g, s), m = metrics(r, s.setpoint); lastM = m;
+    const T = thin(r.T);
+    Plotly.react("outPlot", [
+      { x: T, y: T.map(() => s.setpoint), name: "Setpoint", mode: "lines", line: { color: "#b9a0ae", dash: "dash", width: 2 } },
+      { x: T, y: thin(r.Y), name: "True output y(t)", mode: "lines", line: { color: DARK, width: 3 } },
+      { x: T, y: thin(r.YS), name: "Sensor reading ys(t)", mode: "lines", line: { color: PINK, width: 2.5 } }
+    ], layout("True Output vs. Sensor Reading", "Output"), cfg);
+    $("mRise").textContent = m.rise === null ? "N/A" : fmt(m.rise) + " s";
+    $("mOS").textContent = fmt(m.os, 2) + " %";
+    $("mSet").textContent = m.settling === null ? "Not settled" : fmt(m.settling) + " s";
+    $("mErr").textContent = fmt(m.err, 4);
+    const n = $("oscNote");
+    if (m.osc) { n.className = "status bad"; n.textContent = "⚠ Sustained oscillation: the true output keeps swinging by " + fmt(m.pp, 2) + " (peak-to-peak) at the end of the run. Look at τs before blaming the gains."; }
+    else if (m.os > 10) { n.className = "status warning"; n.textContent = "Large overshoot (" + fmt(m.os, 1) + "%) caused by the delayed sensor reading."; }
+    else { n.className = "status success"; n.textContent = "The loop is well damped."; }
+    $("message").textContent = "Simulation completed.";
+    checkPrediction(P, m);
+  } catch (e) { $("message").textContent = "Error: " + e.message; }
+}
+
+/* Prediction */
+let pred = null;
+function lock() {
+  const sel = document.querySelector('input[name="prediction"]:checked');
+  if (!sel) { $("predictionResult").textContent = "Please choose a prediction first."; return; }
+  try {
+    const P = getP(), g = getG(), s = getS(); check(P, g, s);
+    const m = metrics(simulate(P, g, s), s.setpoint);
+    pred = { choice: sel.value, taus: P.taus, os: m.os, key: JSON.stringify([P.K, P.tau, g, s]) };
+    $("predictionResult").className = "status success";
+    $("predictionResult").textContent = "Locked. Baseline τs = " + P.taus + " s, overshoot = " + fmt(m.os, 2) + "%. Now increase τs.";
+  } catch (e) { $("predictionResult").textContent = "Cannot lock: " + e.message; }
+}
+function checkPrediction(P, m) {
+  if (!pred) return;
+  const el = $("predictionResult");
+  if (P.taus <= pred.taus) { el.className = "status warning"; el.textContent = "Increase τs above " + pred.taus + " s to test your prediction."; return; }
+  if (JSON.stringify([P.K, P.tau, getG(), getS()]) !== pred.key) { el.className = "status warning"; el.textContent = "Other values changed since you locked. Lock again for a fair comparison."; return; }
+  const d = m.os - pred.os;
+  const ok = (pred.choice === "more" && d > 0.01) || (pred.choice === "less" && d < -0.01) || (pred.choice === "same" && Math.abs(d) <= 0.01);
+  el.className = "status " + (ok ? "success" : "warning");
+  el.textContent = (ok ? "✔ Your prediction matches. " : "✘ Your prediction did not match. ") + "Overshoot: " + fmt(pred.os, 2) + "% → " + fmt(m.os, 2) + "% (τs " + pred.taus + " → " + P.taus + " s).";
+}
+
+/* Sweep over tau_s */
+function sweep() {
+  try {
+    const P = getP(), g = getG(), s = getS(); check(P, g, s);
+    const xs = [], ys = [], bx = [], by = [];
+    for (let ts = 0; ts <= 3.0001; ts += 0.25) {
+      const m = metrics(simulate({ ...P, taus: ts }, g, s, 0.002), s.setpoint);
+      (m.osc ? (bx.push(ts), by.push(m.os)) : (xs.push(ts), ys.push(m.os)));
+    }
+    Plotly.react("sweepPlot", [
+      { x: xs, y: ys, name: "Settles", mode: "lines+markers", line: { color: PINK }, marker: { size: 9, color: PINK } },
+      { x: bx, y: by, name: "Sustained oscillation", mode: "markers", marker: { size: 11, color: "#c53d48", symbol: "x" } }
+    ], layout("Overshoot vs. Sensor Time Constant", "Overshoot (%)", "Sensor τs (seconds)"), cfg);
+  } catch (e) { $("message").textContent = "Error: " + e.message; }
+}
+
+function reset() {
+  const v = { K: 1, tau: 1, taus: 0.5, Kp: 5, Ki: 10, Kd: 0, setpoint: 1, limit: 10, duration: 20 };
+  Object.keys(v).forEach(id => $(id).value = v[id]); labels(); run();
+}
+function labels() { ["K", "tau", "taus"].forEach(id => $(id + "Val").textContent = fmt(num(id), id === "taus" ? 2 : 1)); }
+
+let timer = null;
+const auto = () => { clearTimeout(timer); timer = setTimeout(run, 250); };
+["K", "tau", "taus"].forEach(id => $(id).addEventListener("input", () => { labels(); auto(); }));
+["Kp", "Ki", "Kd", "setpoint", "limit", "duration"].forEach(id => $(id).addEventListener("input", auto));
+$("runBtn").addEventListener("click", run);
+$("resetBtn").addEventListener("click", reset);
+$("lockBtn").addEventListener("click", lock);
+$("sweepBtn").addEventListener("click", sweep);
+labels(); run(); sweep();
+</script>
+</body>
+</html>
