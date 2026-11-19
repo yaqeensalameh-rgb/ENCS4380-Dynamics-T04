@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P1 - PID Controller Playground</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--bg:#fff7fa;--card:#fff;--primary:#e87aa6;--dark:#c2185b;--soft:#fde8f1;--text:#3a2a33;--muted:#96808c;--border:#f6dce8;--green:#23834b;--red:#c53d48}
+*{box-sizing:border-box;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
+nav.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 16px}
+nav.top b{color:var(--dark);margin-right:10px;font-size:14px}
+nav.top a{color:#85707b;text-decoration:none;font-size:12px;padding:7px 10px;border-radius:8px}
+nav.top a:hover,nav.top a.active{background:var(--soft);color:var(--dark)}
+nav.top a.p2{margin-left:auto;background:var(--dark);color:#fff;font-weight:700}
+main{max-width:1100px;margin:auto;padding:28px 16px 40px}
+.eyebrow{color:var(--dark);font-size:11px;font-weight:700;letter-spacing:1.4px}
+h1{font-size:28px;margin:8px 0;color:#7a1141}
+h2{font-size:17px;margin:0 0 4px}
+.sn{font-size:10px;color:var(--primary);font-weight:700;letter-spacing:1.2px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:22px;margin-bottom:18px;box-shadow:0 5px 22px rgba(194,24,91,.05);scroll-margin-top:70px}
+.muted{color:var(--muted);font-size:12px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:16px}
+.field{display:flex;flex-direction:column;gap:8px}
+label{font-size:12px;font-weight:600;color:#5a4650}
+input,select{width:100%;padding:10px 12px;border:1px solid #f0d6e2;border-radius:9px;background:#fff;color:var(--text);font-size:13px;outline:none}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,122,166,.18)}
+input[type=range]{padding:0;accent-color:var(--dark)}
+.value{color:var(--dark);font-weight:700}
+.pid-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.pid-item{background:#fffafc;border:1px solid var(--border);border-radius:12px;padding:16px}
+.pid-letter{font-size:21px;font-weight:800;color:var(--dark)}
+.pid-item p{color:var(--muted);font-size:11px;margin:8px 0 0}
+.prediction-card{background:linear-gradient(135deg,#fff5f9,#fff)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;margin-top:12px}
+.opt{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;font-size:12px}
+.opt:has(input:checked){border-color:var(--primary);background:var(--soft);color:var(--dark)}
+.opt input{width:auto;accent-color:var(--dark)}
+.status{padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:9px;margin-top:14px;font-size:12px;line-height:1.7;color:#6e5a65}
+.status.success{border-color:#c5e5d1;background:#f3fbf5;color:var(--green)}
+.status.warning{border-color:#f0dfc3;background:#fffaf1;color:#946b2c}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:none;border-radius:9px;padding:11px 19px;background:var(--dark);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+button:hover{background:#a3144d}
+button.secondary{background:var(--soft);color:var(--dark)}
+button.secondary:hover{background:#fbd5e6}
+.plot{width:100%;height:370px}
+.plot-ph{height:240px;border:1px dashed #f0cbdc;border-radius:11px;display:flex;justify-content:center;align-items:center;color:var(--muted);font-size:12px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.metric{background:#fff8fb;border:1px solid #f9e1ec;padding:16px;border-radius:11px}
+.metric-name{font-size:11px;color:var(--muted)}
+.metric-number{font-size:22px;font-weight:800;color:var(--dark);margin-top:8px}
+.table-wrapper{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:580px}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:#fff1f6;color:var(--dark)}
+.pass{color:var(--green);font-weight:800}.fail{color:var(--red);font-weight:800}
+.hidden{display:none!important}
+svg.diag{width:100%;max-width:780px;display:block;margin:10px auto}
+svg .bx{fill:var(--soft);stroke:var(--primary);stroke-width:1.5}
+svg .ln{stroke:var(--dark);fill:none;stroke-width:2}
+svg text{font-size:13px;fill:#7a1141;font-weight:700;text-anchor:middle;font-family:inherit}
+footer{text-align:center;padding:20px 0;border-top:1px solid var(--border);margin-top:28px}
+@media(max-width:650px){.pid-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.plot{height:310px}h1{font-size:23px}nav.top a.p2{margin-left:0}}
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <b>∿ Dynamics Toolkit · Control</b>
+  <a href="#plant">Plant</a><a href="#pid">PID</a><a href="#prediction">Predict</a>
+  <a href="#simulation">Settings</a><a href="#response">Response</a><a href="#control">Control&nbsp;u</a>
+  <a href="#metrics">Metrics</a><a href="#diagram">Diagram</a><a href="#validation">Validation</a>
+  <a class="p2" href="p2.html">Next: P2 Slow Sensor →</a>
+</nav>
+
+<main>
+<header>
+  <div class="eyebrow">HOMEWORK 2 · MODULE P1</div>
+  <h1>PID Controller Playground</h1>
+  <p class="muted">Explore how Proportional, Integral and Derivative control change a system's closed-loop response. Everything is simulated live in your browser with RK4.</p>
+</header>
+
+<!-- PLANT -->
+<section class="card" id="plant">
+  <div class="sn">01 · PLANT MODEL</div><h2>Select the Plant</h2>
+  <div class="grid">
+    <div class="field"><label for="plantType">Plant Model</label>
+      <select id="plantType"><option value="first">First-Order System</option><option value="second">Second-Order System</option></select></div>
+  </div>
+  <div id="firstParams" class="grid">
+    <div class="field"><label>Gain K: <span class="value" id="KVal">1.0</span></label><input id="K" type="range" min="0.5" max="3" step="0.1" value="1"></div>
+    <div class="field"><label>Time Constant τ: <span class="value" id="tauVal">1.0</span> s</label><input id="tau" type="range" min="0.5" max="10" step="0.5" value="1"></div>
+  </div>
+  <div id="secondParams" class="grid hidden">
+    <div class="field"><label>Mass m: <span class="value" id="mVal">1.0</span> kg</label><input id="m" type="range" min="0.5" max="5" step="0.1" value="1"></div>
+    <div class="field"><label>Damping b: <span class="value" id="bVal">2.0</span> Ns/m</label><input id="b" type="range" min="0.2" max="10" step="0.1" value="2"></div>
+    <div class="field"><label>Stiffness k: <span class="value" id="kVal">4.0</span> N/m</label><input id="k" type="range" min="0.5" max="20" step="0.5" value="4"></div>
+  </div>
+  <p class="muted" id="plantDescription" style="margin-top:14px"></p>
+</section>
+
+<!-- PID -->
+<section class="card" id="pid">
+  <div class="sn">02 · CONTROLLER</div><h2>PID Controller Parameters</h2>
+  <div class="pid-grid">
+    <div class="pid-item"><div class="pid-letter">P</div><label for="Kp">Proportional Gain (Kp)</label>
+      <input id="Kp" type="number" min="0" max="100" step="0.1" value="9"><p>Reacts to the current error. Faster response, but leaves a steady-state error.</p></div>
+    <div class="pid-item"><div class="pid-letter">I</div><label for="Ki">Integral Gain (Ki)</label>
+      <input id="Ki" type="number" min="0" max="100" step="0.1" value="0"><p>Accumulates past error. Removes the steady-state error, but can add overshoot.</p></div>
+    <div class="pid-item"><div class="pid-letter">D</div><label for="Kd">Derivative Gain (Kd)</label>
+      <input id="Kd" type="number" min="0" max="100" step="0.1" value="0"><p>Reacts to how fast the output changes. Damps overshoot.</p></div>
+  </div>
+  <p class="muted" style="margin-top:12px">Control law: u = Kp·e + Ki·∫e dt − Kd·dy/dt (derivative on the measurement, so a setpoint step does not cause a spike).</p>
+</section>
+
+<!-- PREDICTION -->
+<section class="card prediction-card" id="prediction">
+  <div class="sn">03 · INTERACTIVE LEARNING</div><h2>Predict, Then Check</h2>
+  <p class="muted">1) Pick a question and your prediction. 2) Lock it (this stores a baseline run). 3) Increase that gain and see the result.</p>
+  <div class="field"><label for="question">What would you like to investigate?</label>
+    <select id="question">
+      <option value="p">What happens when Kp increases?</option>
+      <option value="i">What happens when Ki increases?</option>
+      <option value="d">What happens when Kd increases?</option>
+    </select></div>
+  <div id="predictionOptions" class="opts"></div>
+  <div class="actions"><button class="secondary" id="lockBtn">Lock Prediction</button></div>
+  <div id="predictionResult" class="status">Choose a question and make your prediction.</div>
+</section>
+
+<!-- SETTINGS -->
+<section class="card" id="simulation">
+  <div class="sn">04 · RUN CONFIGURATION</div><h2>Simulation Settings</h2>
+  <div class="grid">
+    <div class="field"><label for="setpoint">Setpoint (Target)</label><input id="setpoint" type="number" value="1" step="0.1"></div>
+    <div class="field"><label for="stepTime">Step Time (s)</label><input id="stepTime" type="number" value="0.2" min="0" max="5" step="0.1"></div>
+    <div class="field"><label for="limit">Control Limit (±)</label><input id="limit" type="number" value="10" min="0.1" step="0.5"></div>
+    <div class="field"><label for="duration">Duration (s)</label><input id="duration" type="number" value="10" min="1" max="30" step="1"></div>
+  </div>
+  <div class="actions">
+    <button id="runBtn">▶ Run Simulation</button>
+    <button class="secondary" id="resetBtn">Reset Parameters</button>
+  </div>
+  <div id="message" class="status">The plots update automatically when you change a value.</div>
+</section>
+
+<!-- RESPONSE -->
+<section class="card" id="response">
+  <div class="sn">05 · OUTPUT</div><h2>System Response</h2>
+  <div id="outputPlot" class="plot"></div>
+  <p class="muted">Output vs. setpoint, solved numerically with RK4 (dt = 1 ms).</p>
+</section>
+
+<!-- CONTROL -->
+<section class="card" id="control">
+  <div class="sn">06 · CONTROL EFFORT</div><h2>Control Signal u(t)</h2>
+  <div id="controlPlot" class="plot"></div>
+  <div id="satNote" class="status">–</div>
+</section>
+
+<!-- METRICS -->
+<section class="card" id="metrics">
+  <div class="sn">07 · PERFORMANCE</div><h2>Performance Metrics</h2>
+  <div class="metrics">
+    <div class="metric"><div class="metric-name">Rise Time (10% → 90%)</div><div class="metric-number" id="riseTime">–</div></div>
+    <div class="metric"><div class="metric-name">Overshoot</div><div class="metric-number" id="overshoot">–</div></div>
+    <div class="metric"><div class="metric-name">Settling Time (±2%)</div><div class="metric-number" id="settlingTime">–</div></div>
+    <div class="metric"><div class="metric-name">Steady-State Error</div><div class="metric-number" id="steadyError">–</div></div>
+  </div>
+  <p class="muted" style="margin-top:12px">Rise time and settling time are measured relative to the actual final value. Overshoot is relative to the final value. Steady-state error = |setpoint − final output|.</p>
+</section>
+
+<!-- DIAGRAM -->
+<section class="card" id="diagram">
+  <div class="sn">08 · SYSTEM STRUCTURE</div><h2>Closed-Loop Block Diagram</h2>
+  <svg class="diag" viewBox="0 0 780 200" role="img" aria-label="Closed loop block diagram">
+    <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c2185b"/></marker></defs>
+    <text x="22" y="72">r(t)</text>
+    <line class="ln" x1="44" y1="80" x2="88" y2="80" marker-end="url(#ah)"/>
+    <circle class="bx" cx="108" cy="80" r="20"/>
+    <text x="97" y="76" style="font-size:12px">+</text><text x="100" y="108" style="font-size:16px">−</text>
+    <line class="ln" x1="128" y1="80" x2="178" y2="80" marker-end="url(#ah)"/><text x="152" y="70" style="font-size:11px">e</text>
+    <rect class="bx" x="180" y="50" width="120" height="60" rx="10"/><text x="240" y="76">PID</text><text x="240" y="94" style="font-size:10px;font-weight:500">Kp + Ki/s + Kd·s</text>
+    <line class="ln" x1="300" y1="80" x2="350" y2="80" marker-end="url(#ah)"/><text x="325" y="70" style="font-size:11px">u</text>
+    <rect class="bx" x="352" y="50" width="100" height="60" rx="10"/><text x="402" y="76">Limit</text><text x="402" y="94" style="font-size:10px;font-weight:500">±u max</text>
+    <line class="ln" x1="452" y1="80" x2="500" y2="80" marker-end="url(#ah)"/>
+    <rect class="bx" x="502" y="50" width="110" height="60" rx="10"/><text x="557" y="86">Plant</text>
+    <line class="ln" x1="612" y1="80" x2="730" y2="80" marker-end="url(#ah)"/><text x="752" y="85">y(t)</text>
+    <polyline class="ln" points="680,80 680,165 108,165 108,102" marker-end="url(#ah)"/><circle cx="680" cy="80" r="4" fill="#c2185b"/>
+    <text x="390" y="187" style="font-size:11px;font-weight:500">feedback: measured output</text>
+  </svg>
+  <p class="muted">The output is measured and subtracted from the setpoint. The PID acts on the error, and the actuator limit clips the control signal. Integral anti-windup (conditional integration) is active while the actuator is saturated.</p>
+</section>
+
+<!-- VALIDATION -->
+<section class="card" id="validation">
+  <div class="sn">09 · REQUIREMENT CHECK</div><h2>Homework Validation Checks</h2>
+  <p class="muted">Fixed tests, independent of the sliders. Plant K/(τs+1) with K = 1, τ = 1 s.</p>
+  <div class="table-wrapper"><table>
+    <thead><tr><th>Test</th><th>Expected</th><th>Calculated</th><th>Status</th></tr></thead>
+    <tbody id="validationBody"></tbody></table></div>
+  <div class="actions"><button class="secondary" id="validateBtn">Run Validation Again</button></div>
+</section>
+
+<footer class="muted">ENCS4380 · Homework 2 – PID Control · Module P1</footer>
+</main>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value);
+const fmt = (v, d = 3) => Number.isFinite(v) ? Number(v.toFixed(d)).toString() : "N/A";
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const PINK = "#e87aa6", DARK = "#c2185b";
+
+/* ---------- Plant ---------- */
+function getPlant() {
+  return $("plantType").value === "first"
+    ? { type: "first", K: num("K"), tau: num("tau") }
+    : { type: "second", m: num("m"), b: num("b"), k: num("k") };
+}
+function updatePlantUI() {
+  const s = $("plantType").value === "second";
+  $("firstParams").classList.toggle("hidden", s);
+  $("secondParams").classList.toggle("hidden", !s);
+  $("plantDescription").textContent = s
+    ? "Second-order plant: G(s) = 1 / (ms² + bs + k)"
+    : "First-order plant: G(s) = K / (τs + 1)";
+}
+function updateSliderLabels() {
+  ["K", "tau", "m", "b", "k"].forEach(id => $(id + "Val").textContent = fmt(num(id), 1));
+}
+function plantDerivative(x, u, p) {
+  if (p.type === "first") return [(-x[0] + p.K * u) / p.tau];
+  return [x[1], (u - p.b * x[1] - p.k * x[0]) / p.m];
+}
+function rk4Step(x, u, p, dt) {
+  const add = (a, k, f) => a.map((v, i) => v + f * k[i]);
+  const k1 = plantDerivative(x, u, p);
+  const k2 = plantDerivative(add(x, k1, dt / 2), u, p);
+  const k3 = plantDerivative(add(x, k2, dt / 2), u, p);
+  const k4 = plantDerivative(add(x, k3, dt), u, p);
+  return x.map((v, i) => v + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+}
+
+/* ---------- Closed-loop simulation ---------- */
+function simulate(plant, g, s) {
+  const dt = 0.001, steps = Math.ceil(s.duration / dt);
+  let x = plant.type === "first" ? [0] : [0, 0];
+  let integral = 0, prevY = 0, satCount = 0;
+  const time = [], output = [], reference = [], control = [];
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i * dt;
+    const r = t >= s.stepTime ? s.setpoint : 0;
+    const y = x[0], e = r - y;
+    const dy = (y - prevY) / dt;
+
+    let raw = g.Kp * e + g.Ki * integral - g.Kd * dy;
+    let u = clamp(raw, -s.limit, s.limit);
+
+    // Anti-windup: stop integrating while saturated and pushing further.
+    const pushing = (raw > s.limit && e > 0) || (raw < -s.limit && e < 0);
+    if (!pushing) integral += e * dt;
+    raw = g.Kp * e + g.Ki * integral - g.Kd * dy;
+    u = clamp(raw, -s.limit, s.limit);
+    if (Math.abs(raw) > s.limit) satCount++;
+
+    time.push(t); output.push(y); reference.push(r); control.push(u);
+    prevY = y;
+
+    if (i < steps) {
+      x = rk4Step(x, u, plant, dt);
+      if (x.some(v => !Number.isFinite(v) || Math.abs(v) > 1e8))
+        throw new Error("The simulation became unstable. Try smaller gains.");
+    }
+  }
+  return { time, output, reference, control, satPct: 100 * satCount / (steps + 1) };
+}
+
+/* ---------- Metrics ---------- */
+function calculateMetrics(time, output, setpoint, stepTime) {
+  const si = time.findIndex(t => t >= stepTime);
+  const final = output[output.length - 1];
+  const err = Math.abs(setpoint - final);
+  if (si < 0) return { rise: null, overshoot: null, settling: null, error: err };
+  const init = output[si], amp = final - init;
+  if (Math.abs(amp) < 1e-10) return { rise: null, overshoot: null, settling: null, error: err };
+
+  const cross = level => {
+    for (let i = si + 1; i < output.length; i++) {
+      const a = output[i - 1], b = output[i];
+      if ((amp > 0 && a < level && b >= level) || (amp < 0 && a > level && b <= level))
+        return time[i - 1] + (level - a) * (time[i] - time[i - 1]) / (b - a);
+    }
+    return null;
+  };
+  const t10 = cross(init + 0.1 * amp), t90 = cross(init + 0.9 * amp);
+  const rise = t10 !== null && t90 !== null ? t90 - t10 : null;
+
+  let ext = amp > 0 ? -Infinity : Infinity;
+  for (let i = si; i < output.length; i++) ext = amp > 0 ? Math.max(ext, output[i]) : Math.min(ext, output[i]);
+  const overshoot = Math.max(0, (amp > 0 ? ext - final : final - ext) / Math.abs(amp) * 100);
+
+  const band = 0.02 * Math.abs(amp);
+  let last = -1;
+  for (let i = si; i < output.length; i++) if (Math.abs(output[i] - final) > band) last = i;
+  let settling = null;
+  if (last === -1) settling = 0;
+  else if (last < output.length - 1) settling = time[last + 1];
+  return { rise, overshoot, settling, error: err };
+}
+
+/* ---------- Plots ---------- */
+const cfg = { responsive: true, displaylogo: false };
+const baseLayout = (title, ytitle) => ({
+  title: { text: title, font: { size: 15, color: "#7a1141" } },
+  xaxis: { title: "Time (seconds)", gridcolor: "#f9e6ee" },
+  yaxis: { title: ytitle, gridcolor: "#f9e6ee" },
+  paper_bgcolor: "#fff", plot_bgcolor: "#fff",
+  font: { family: "Segoe UI, Arial", color: "#85707b" },
+  margin: { l: 58, r: 20, t: 50, b: 55 }, legend: { orientation: "h", y: -0.22 }
+});
+function thin(a, n = 5) { return a.filter((_, i) => i % n === 0); }
+
+function drawPlots(r, s) {
+  const T = thin(r.time);
+  Plotly.react("outputPlot", [
+    { x: T, y: thin(r.reference), name: "Setpoint", mode: "lines", line: { color: DARK, dash: "dash", width: 2 } },
+    { x: T, y: thin(r.output), name: "System Output y(t)", mode: "lines", line: { color: PINK, width: 3 } }
+  ], baseLayout("Closed-Loop Output Response", "Output"), cfg);
+
+  Plotly.react("controlPlot", [
+    { x: T, y: thin(r.control), name: "Control u(t)", mode: "lines", line: { color: DARK, width: 2 } },
+    { x: [T[0], T[T.length - 1]], y: [s.limit, s.limit], name: "Limit", mode: "lines", line: { color: PINK, dash: "dash" } },
+    { x: [T[0], T[T.length - 1]], y: [-s.limit, -s.limit], name: "−Limit", mode: "lines", line: { color: PINK, dash: "dash" }, showlegend: false }
+  ], baseLayout("Controller Output and Saturation Limits", "Control signal u(t)"), cfg);
+}
+
+/* ---------- Inputs ---------- */
+const getGains = () => ({ Kp: num("Kp"), Ki: num("Ki"), Kd: num("Kd") });
+const getSettings = () => ({ setpoint: num("setpoint"), stepTime: num("stepTime"), limit: num("limit"), duration: num("duration") });
+
+function validateInputs(p, g, s) {
+  if ([g.Kp, g.Ki, g.Kd, s.setpoint, s.stepTime, s.limit, s.duration].some(v => !Number.isFinite(v)))
+    throw new Error("Please enter valid numbers.");
+  if (g.Kp < 0 || g.Ki < 0 || g.Kd < 0 || s.limit <= 0 || s.duration <= 0 || s.duration > 30 || s.stepTime < 0 || s.stepTime >= s.duration)
+    throw new Error("Check the gains, control limit, step time and duration.");
+  if (p.type === "first" && (!(p.K > 0) || !(p.tau > 0))) throw new Error("K and τ must be positive.");
+  if (p.type === "second" && (!(p.m > 0) || !(p.b > 0) || !(p.k > 0))) throw new Error("m, b and k must be positive.");
+}
+
+let lastMetrics = null;
+function runSimulation() {
+  try {
+    if (typeof Plotly === "undefined") throw new Error("Plotly could not load. Check your internet connection.");
+    const plant = getPlant(), g = getGains(), s = getSettings();
+    validateInputs(plant, g, s);
+    const r = simulate(plant, g, s);
+    const m = calculateMetrics(r.time, r.output, s.setpoint, s.stepTime);
+    lastMetrics = m;
+    drawPlots(r, s);
+
+    $("riseTime").textContent = m.rise === null ? "N/A" : fmt(m.rise) + " s";
+    $("overshoot").textContent = m.overshoot === null ? "N/A" : fmt(m.overshoot, 2) + " %";
+    $("settlingTime").textContent = m.settling === null ? "Not settled" : fmt(m.settling) + " s";
+    const pct = s.setpoint !== 0 ? " (" + fmt(m.error / Math.abs(s.setpoint) * 100, 2) + "%)" : "";
+    $("steadyError").textContent = fmt(m.error, 4) + pct;
+
+    $("satNote").textContent = r.satPct > 0.5
+      ? "⚠ The actuator was saturated for " + fmt(r.satPct, 1) + "% of the run. Anti-windup is stopping the integral from growing during saturation."
+      : "The control signal stayed within the actuator limit.";
+    $("message").textContent = "Simulation completed. Plots and metrics updated.";
+    checkPrediction(g, m);
+  } catch (e) {
+    $("message").textContent = "Error: " + e.message;
+  }
+}
+
+/* ---------- Predict, then check ---------- */
+const QUESTIONS = {
+  p: { gain: "Kp", opts: [["faster", "Faster rise time"], ["slower", "Slower rise time"], ["same", "No significant change"]] },
+  i: { gain: "Ki", opts: [["lower", "Lower steady-state error"], ["higher", "Higher overshoot"], ["same", "No significant change"]] },
+  d: { gain: "Kd", opts: [["lower", "Lower overshoot"], ["higher", "Higher overshoot"], ["same", "No significant change"]] }
+};
+let pred = null; // {choice, q, gain, baseValue, base, plant, settings}
+
+function updatePredictionOptions() {
+  const q = $("question").value;
+  $("predictionOptions").innerHTML = QUESTIONS[q].opts.map(o =>
+    `<label class="opt"><input type="radio" name="prediction" value="${o[0]}">${o[1]}</label>`).join("");
+  pred = null;
+  $("predictionResult").className = "status";
+  $("predictionResult").textContent = "Choose your prediction, then lock it.";
+}
+
+function lockPrediction() {
+  const sel = document.querySelector('input[name="prediction"]:checked');
+  if (!sel) { $("predictionResult").textContent = "Please choose a prediction first."; return; }
+  try {
+    const plant = getPlant(), g = getGains(), s = getSettings();
+    validateInputs(plant, g, s);
+    const q = $("question").value, gain = QUESTIONS[q].gain;
+    const r = simulate(plant, g, s);
+    pred = {
+      choice: sel.value, q, gain, baseValue: g[gain],
+      base: calculateMetrics(r.time, r.output, s.setpoint, s.stepTime),
+      plant: JSON.stringify(plant), settings: JSON.stringify(s)
+    };
+    $("predictionResult").className = "status success";
+    $("predictionResult").textContent = "Prediction locked. Baseline " + gain + " = " + g[gain] + ". Now increase " + gain + " and the page will compare automatically.";
+  } catch (e) {
+    $("predictionResult").textContent = "Cannot lock prediction: " + e.message;
+  }
+}
+
+function checkPrediction(g, m) {
+  if (!pred) return;
+  const el = $("predictionResult");
+  if (g[pred.gain] <= pred.baseValue) {
+    el.className = "status warning";
+    el.textContent = "Increase " + pred.gain + " above " + pred.baseValue + " to test your prediction (now: " + g[pred.gain] + ").";
+    return;
+  }
+  if (JSON.stringify(getPlant()) !== pred.plant || JSON.stringify(getSettings()) !== pred.settings) {
+    el.className = "status warning";
+    el.textContent = "The plant or settings changed since you locked. Lock again for a fair comparison.";
+    return;
+  }
+  const b = pred.base;
+  const dRise = (m.rise !== null && b.rise !== null) ? m.rise - b.rise : NaN;
+  const dOS = (m.overshoot !== null && b.overshoot !== null) ? m.overshoot - b.overshoot : NaN;
+  const dErr = m.error - b.error;
+  const tests = {
+    p: { faster: dRise < -0.001, slower: dRise > 0.001, same: Math.abs(dRise) <= 0.001 },
+    i: { lower: dErr < -1e-5, higher: dOS > 0.01, same: Math.abs(dErr) <= 1e-5 && Math.abs(dOS) <= 0.01 },
+    d: { lower: dOS < -0.01, higher: dOS > 0.01, same: Math.abs(dOS) <= 0.01 }
+  };
+  const ok = tests[pred.q][pred.choice] === true;
+  const facts = {
+    p: "Rise time: " + fmt(b.rise) + " s → " + fmt(m.rise) + " s.",
+    i: "Steady-state error: " + fmt(b.error, 4) + " → " + fmt(m.error, 4) + ", overshoot: " + fmt(b.overshoot, 2) + "% → " + fmt(m.overshoot, 2) + "%.",
+    d: "Overshoot: " + fmt(b.overshoot, 2) + "% → " + fmt(m.overshoot, 2) + "%."
+  }[pred.q];
+  el.className = "status " + (ok ? "success" : "warning");
+  el.textContent = (ok ? "✔ Your prediction matches. " : "✘ Your prediction did not match. ") + facts +
+    (pred.q === "d" && b.overshoot < 0.01 ? " (A first-order plant with P control has no overshoot, so D has nothing to damp. Try the second-order plant.)" : "");
+}
+
+/* ---------- Reset ---------- */
+function resetParameters() {
+  const v = { plantType: "first", K: 1, tau: 1, m: 1, b: 2, k: 4, Kp: 9, Ki: 0, Kd: 0, setpoint: 1, stepTime: 0.2, limit: 10, duration: 10 };
+  Object.keys(v).forEach(id => $(id).value = v[id]);
+  updatePlantUI(); updateSliderLabels(); updatePredictionOptions(); runSimulation();
+}
+
+/* ---------- Validation (fixed tests) ---------- */
+function runValidation() {
+  const rows = [];
+  const base = { setpoint: 1, stepTime: 0, limit: 100 };
+  const P1 = { type: "first", K: 1, tau: 1 };
+
+  { // 1: P only
+    const r = simulate(P1, { Kp: 9, Ki: 0, Kd: 0 }, { ...base, duration: 3 });
+    const fin = r.output[r.output.length - 1], sse = Math.abs(1 - fin);
+    const m = calculateMetrics(r.time, r.output, 1, 0);
+    const tcl = m.rise / Math.log(9);
+    rows.push({
+      name: "1) P only, Kp = 9",
+      expected: "τcl = τ/(1+K·Kp) = 0.1 s, SSE = 1/(1+K·Kp) = 10%",
+      calc: "τcl ≈ " + fmt(tcl, 4) + " s, SSE = " + fmt(sse * 100, 2) + "%",
+      pass: Math.abs(tcl - 0.1) < 0.003 && Math.abs(sse - 0.1) < 0.002
+    });
+  }
+  { // 2: PI, wn and zeta
+    const K = 1, tau = 1, Kp = 1, Ki = 1;
+    const wn = Math.sqrt(K * Ki / tau), zeta = (1 + K * Kp) / (2 * Math.sqrt(tau * K * Ki));
+    const r = simulate(P1, { Kp, Ki, Kd: 0 }, { ...base, duration: 15 });
+    const sse = Math.abs(1 - r.output[r.output.length - 1]);
+    const m = calculateMetrics(r.time, r.output, 1, 0);
+    rows.push({
+      name: "2) PI, Kp = 1, Ki = 1",
+      expected: "ωn = 1 rad/s, ζ = 1 (critically damped, no overshoot)",
+      calc: "ωn = " + fmt(wn, 4) + ", ζ = " + fmt(zeta, 4) + ", overshoot = " + fmt(m.overshoot, 3) + "%",
+      pass: Math.abs(wn - 1) < 1e-9 && Math.abs(zeta - 1) < 1e-9 && m.overshoot < 0.1 && sse < 0.002
+    });
+  }
+  { // 3: any PI -> zero SSE
+    const a = simulate({ type: "first", K: 1.5, tau: 2 }, { Kp: 2, Ki: 0.5, Kd: 0 }, { ...base, duration: 30 });
+    const b = simulate({ type: "second", m: 1, b: 2, k: 4 }, { Kp: 3, Ki: 2, Kd: 0 }, { ...base, duration: 30 });
+    const ea = Math.abs(1 - a.output[a.output.length - 1]);
+    const eb = Math.abs(1 - b.output[b.output.length - 1]);
+    rows.push({
+      name: "3) Any PI controller",
+      expected: "Zero steady-state error for a step (first- and second-order plants)",
+      calc: "1st-order SSE = " + fmt(ea, 5) + ", 2nd-order SSE = " + fmt(eb, 5),
+      pass: ea < 0.002 && eb < 0.002
+    });
+  }
+  $("validationBody").innerHTML = rows.map(r =>
+    `<tr><td>${r.name}</td><td>${r.expected}</td><td>${r.calc}</td><td><span class="${r.pass ? "pass" : "fail"}">${r.pass ? "PASS" : "FAIL"}</span></td></tr>`).join("");
+}
+
+/* ---------- Events ---------- */
+let timer = null;
+const autoRun = () => { clearTimeout(timer); timer = setTimeout(runSimulation, 250); };
+
+$("plantType").addEventListener("change", () => { updatePlantUI(); autoRun(); });
+["K", "tau", "m", "b", "k"].forEach(id => $(id).addEventListener("input", () => { updateSliderLabels(); autoRun(); }));
+["Kp", "Ki", "Kd", "setpoint", "stepTime", "limit", "duration"].forEach(id => $(id).addEventListener("input", autoRun));
+$("question").addEventListener("change", updatePredictionOptions);
+$("lockBtn").addEventListener("click", lockPrediction);
+$("runBtn").addEventListener("click", runSimulation);
+$("resetBtn").addEventListener("click", resetParameters);
+$("validateBtn").addEventListener("click", runValidation);
+
+const links = document.querySelectorAll("nav.top a[href^='#']");
+if ("IntersectionObserver" in window) {
+  const obs = new IntersectionObserver(es => es.forEach(en => {
+    if (en.isIntersecting) links.forEach(l => l.classList.toggle("active", l.getAttribute("href") === "#" + en.target.id));
+  }), { rootMargin: "-20% 0px -65% 0px" });
+  document.querySelectorAll("main section[id]").forEach(s => obs.observe(s));
+}
+
+updatePlantUI(); 
+updateSliderLabels(); 
+updatePredictionOptions(); 
+runValidation();
+
+if (typeof Plotly !== "undefined") 
+       runSimulation();
+    
+else $("message").textContent = "Plotly failed to load. Check your internet connection and refresh.";
+</script>
+</body>
+</html>
