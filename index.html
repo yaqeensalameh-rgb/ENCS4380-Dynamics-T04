@@ -1,0 +1,343 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamics & PID Control Toolkit | T04</title>
+
+  <style>
+    :root {
+      --bg: #fff7fa;
+      --white: #ffffff;
+      --pink: #e87aa6;
+      --dark: #9d1955;
+      --soft: #fde8f1;
+      --text: #3a2a33;
+      --muted: #85717d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    header {
+      background: linear-gradient(135deg, #a41959, #e87aa6);
+      color: white;
+      text-align: center;
+      padding: 65px 20px;
+    }
+
+    header h1 {
+      font-size: clamp(28px, 5vw, 43px);
+      margin: 12px 0;
+    }
+
+    header p {
+      max-width: 650px;
+      margin: 12px auto;
+      line-height: 1.7;
+    }
+
+    .team-names {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 22px;
+      letter-spacing: 0.4px;
+      line-height: 1.8;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 40px 18px;
+    }
+
+    h2 {
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    section {
+      margin-bottom: 55px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--white);
+      padding: 25px;
+      border: 1px solid #f5d9e6;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(157, 25, 85, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tag {
+      color: var(--pink);
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .card h3 {
+      color: var(--dark);
+      margin: 12px 0;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      flex: 1;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 18px;
+      margin-top: 15px;
+      border-radius: 9px;
+      background: var(--dark);
+      color: white;
+      text-decoration: none;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .button:hover {
+      background: #bf3678;
+    }
+
+    .upcoming {
+      opacity: 0.65;
+    }
+
+    .upcoming .button {
+      background: #b4a4ac;
+      cursor: default;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px 15px;
+      background: var(--soft);
+      color: var(--dark);
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 45px 18px;
+      }
+
+      .team-names {
+        font-size: 12px;
+      }
+
+      main {
+        padding: 30px 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <p>ENCS4380 | Interfacing Techniques</p>
+
+  <h1>Dynamics & PID Control Toolkit</h1>
+
+  <p>
+    An interactive learning platform for exploring dynamic
+    systems, sensor responses, feedback control and PID tuning.
+  </p>
+
+  <div class="team-names">
+    Yaqeen Salameh · Leen Badran · Reem Tirawi · Nora Issam
+  </div>
+
+  <p>Birzeit University | Team T04</p>
+</header>
+
+<main>
+
+  <!-- Homework 1: Dynamic Systems -->
+  <section id="dynamics">
+
+    <h2>Homework 1 — Dynamic Systems</h2>
+
+    <p class="subtitle">
+      Explore first-order and second-order systems through
+      interactive simulations and predictions.
+    </p>
+
+    <div class="grid">
+
+      <div class="card">
+        <span class="tag">MODULE 01</span>
+
+        <h3>First-Order Time Response</h3>
+
+        <p>
+          Explore step responses, ramp responses,
+          time constants and steady-state behavior.
+        </p>
+
+        <a class="button"
+           href="https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/First_Order_time_Response_M1.html">
+          Open Module
+        </a>
+      </div>
+
+      <div class="card">
+        <span class="tag">MODULE 02</span>
+
+        <h3>First-Order Frequency Response</h3>
+
+        <p>
+          Study amplitude ratio, phase lag,
+          Bode plots and dynamic error.
+        </p>
+
+        <a class="button"
+           href="https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module2%20%282%29.html">
+          Open Module
+        </a>
+      </div>
+
+      <div class="card">
+        <span class="tag">MODULE 03</span>
+
+        <h3>Second-Order Response</h3>
+
+        <p>
+          Explore natural frequency, damping,
+          overshoot and settling time.
+        </p>
+
+        <a class="button"
+           href="https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module3.html">
+          Open Module
+        </a>
+      </div>
+
+      <div class="card">
+        <span class="tag">MODULE 04</span>
+
+        <h3>Guess the Sensor</h3>
+
+        <p>
+          Identify unknown system parameters
+          through interactive challenges.
+        </p>
+
+        <a class="button"
+           href="https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module4.html">
+          Open Module
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- Homework 2: PID Control -->
+  <section id="control">
+
+    <h2>Homework 2 — PID Control</h2>
+
+    <p class="subtitle">
+      Learn how feedback improves system performance,
+      experiment with PID controllers, and investigate
+      the effects of sensors and digital sampling.
+    </p>
+
+    <div class="grid">
+
+      <div class="card">
+        <span class="tag">P1 — CONTROL</span>
+
+        <h3>PID Controller Playground</h3>
+
+        <p>
+          Adjust Kp, Ki and Kd, compare system responses,
+          and evaluate performance metrics.
+        </p>
+
+        <a class="button" href="p1.html">
+          Open P1
+        </a>
+      </div>
+
+      <div class="card">
+        <span class="tag">P2 — CONTROL</span>
+
+        <h3>A Slow Sensor in the Loop</h3>
+
+        <p>
+          Explore sensor delay, overshoot, oscillation
+          and feedback measurement effects.
+        </p>
+
+        <a class="button" href="p2.html">
+          Open P2
+        </a>
+      </div>
+
+      <div class="card upcoming">
+        <span class="tag">P3 — CONTROL</span>
+
+        <h3>Digital PID</h3>
+
+        <p>
+          Investigate sampling time, digital control
+          signals and anti-windup.
+        </p>
+
+        <span class="button">Coming Soon</span>
+      </div>
+
+      <div class="card upcoming">
+        <span class="tag">P4 — CONTROL</span>
+
+        <h3>PID Tuning Challenge</h3>
+
+        <p>
+          Tune PID gains for hidden plants and
+          meet performance specifications.
+        </p>
+
+        <span class="button">Coming Soon</span>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  ENCS4380 — Interfacing Techniques<br>
+  Birzeit University | Team T04 | 2026
+</footer>
+
+</body>
+</html>
