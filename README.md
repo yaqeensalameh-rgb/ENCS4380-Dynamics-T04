@@ -1,6 +1,6 @@
 # ENCS4380 – Dynamic Characteristics Interactive Toolkit
 
-An interactive web-based toolkit developed for ENCS4380 – Interfacing Techniques at Birzeit University.
+An interactive web-based toolkit developed for **ENCS4380 – Interfacing Techniques** at Birzeit University.
 
 The project provides interactive simulations and visualizations to help students understand sensor dynamic characteristics, system responses, and PID control concepts.
 
@@ -22,7 +22,7 @@ This project is designed to provide an interactive learning experience for under
 It includes two main parts:
 
 - **Homework 1 – Dynamic Characteristics:** Covers first-order and second-order system responses, frequency response, and sensor parameter estimation.
-- **Homework 2 – PID Control:** Explores PID controllers, closed-loop systems, sensor dynamics, digital PID control, and PID tuning.
+- **Homework 2 – PID Control:** Explores PID controllers, closed-loop systems, and the effect of sensor dynamics on control performance.
 
 Users can adjust system parameters, run simulations, observe real-time plots, make predictions, and compare simulation results with theoretical behavior.
 
@@ -42,13 +42,13 @@ Users can adjust system parameters, run simulations, observe real-time plots, ma
 
 ## Modules
 
-- **Module 1 – First-Order Time Response:** Explores step and ramp responses and the effect of the time constant (τ).
+- **[Module 1 – First-Order Time Response](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/First_Order_time_Response_M1.html):** Explores step and ramp responses and the effect of the time constant (τ).
 
-- **Module 2 – First-Order Frequency Response:** Demonstrates amplitude ratio, phase lag, Bode plots, and dynamic error.
+- **[Module 2 – First-Order Frequency Response](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module2%20%282%29.html):** Demonstrates amplitude ratio, phase lag, Bode plots, and dynamic error.
 
-- **Module 3 – Second-Order Response:** Explores damping conditions, response characteristics, poles, and state-space modeling.
+- **[Module 3 – Second-Order Response](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module3.html):** Explores damping conditions, response characteristics, poles, and state-space modeling.
 
-- **Module 4 – Guess the Sensor:** Challenges users to estimate unknown sensor parameters from response curves.
+- **[Module 4 – Guess the Sensor](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/module4.html):** Challenges users to estimate unknown sensor parameters from response curves.
 
 ## Validation – Homework 1
 
@@ -100,13 +100,13 @@ This section introduces interactive activities for understanding PID control and
 
 ## Available Activities
 
-- **P1 – PID Controller Playground:** Explores Proportional, Integral, and Derivative control using interactive simulations, adjustable controller gains, response plots, and performance measurements.
+- **[P1 – PID Controller Playground](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/p1.html):** Explores Proportional, Integral, and Derivative control using interactive simulations, adjustable controller gains, response plots, and performance measurements.
 
-- **P2 – A Slow Sensor in the Loop:** Demonstrates how sensor dynamics and measurement delay affect closed-loop control performance.
+- **[P2 – A Slow Sensor in the Loop](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/p2.html):** Demonstrates how sensor dynamics and measurement delay affect closed-loop control performance.
 
-- **P3 – Digital PID:** Explores digital PID control, sampling time, digital control signals, and anti-windup behavior.
+- **[P3 – Digital PID](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/p3.html):** Explores digital PID control and its implementation in a discrete-time system.
 
-- **P4 – PID Tuning Challenge:** Provides an interactive challenge for tuning PID gains to achieve specified system performance.
+- **[P4 – PID Tuning Challenge](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/p4.html):** Provides an interactive challenge for tuning PID controller parameters and analyzing the resulting system response.
 
 ## Learning Objectives
 
@@ -115,9 +115,8 @@ This section introduces interactive activities for understanding PID control and
 - Analyze the relationship between controller parameters and system response.
 - Understand the difference between actual system output and sensor measurements.
 - Investigate how sensor time constants affect closed-loop performance.
-- Understand the effect of sampling in digital PID control.
-- Explore anti-windup behavior in digital control.
-- Practice PID tuning based on system performance requirements.
+- Understand digital PID control and discrete-time implementation.
+- Practice tuning PID controller parameters.
 - Evaluate system behavior using response plots and performance metrics.
 
 ## Validation – Homework 2
@@ -132,7 +131,7 @@ These checks are implemented in the P1 module.
 
 ---
 
-# Technologies Used
+## Technologies Used
 
 - HTML5
 - CSS3
@@ -141,11 +140,9 @@ These checks are implemented in the P1 module.
 - GitHub
 - GitHub Pages
 
----
+## Work Distribution
 
-# Work Distribution
-
-## Homework 1
+### Homework 1
 
 | Module | Responsible Member |
 |---|---|
@@ -154,7 +151,7 @@ These checks are implemented in the P1 module.
 | Module 3 | Reem Tirawi |
 | Module 4 | Nora Issam |
 
-## Homework 2
+### Homework 2
 
 | Module | Responsible Member |
 |---|---|
@@ -165,7 +162,7 @@ These checks are implemented in the P1 module.
 
 ---
 
-# AI Usage
+## AI Usage
 
 AI tools were used for assistance with code development, debugging, understanding mathematical concepts, and improving the interactive simulations.
 
@@ -173,51 +170,27 @@ All implementations were reviewed and tested by the team.
 
 ---
 
-# Screenshots
-
-## Homework 1
+## Screenshots
 
 ### Module 1 – First-Order Time Response
 
-[View Module 1 Screenshot]
+[View Module 1 Screenshot](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/Module1.png)
 
 ### Module 2 – First-Order Frequency Response
 
-[View Screenshot 1]
+[View Screenshot 1](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/Module2_1.png)
 
-[View Screenshot 2]
+[View Screenshot 2](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/Module2_2.png)
 
 ### Module 3 – Second-Order Response
 
-[View Screenshot 1]
+[View Screenshot 1](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/Module3_1.png)
 
-[View Screenshot 2]
-
-### Module 4 – Guess the Sensor
-
-[View Module 4 Screenshot]
-
-## Homework 2
-
-### P1 – PID Controller Playground
-
-[View P1 Screenshot]
-
-### P2 – A Slow Sensor in the Loop
-
-[View P2 Screenshot]
-
-### P3 – Digital PID
-
-[View P3 Screenshot]
-
-### P4 – PID Tuning Challenge
-
-[View P4 Screenshot]
+[View Screenshot 2](https://yaqeensalameh-rgb.github.io/ENCS4380-Dynamics-T04/Module3_2.png)
 
 ---
 
-# Project Learning Outcomes
+## Project Learning Outcomes
 
 By completing this toolkit, users can:
 
@@ -227,7 +200,11 @@ By completing this toolkit, users can:
 - Estimate unknown system parameters from response curves.
 - Understand PID control and closed-loop system behavior.
 - Analyze the effect of sensor dynamics on control performance.
-- Understand the role of sampling and digital PID control.
-- Apply anti-windup concepts in digital control.
-- Practice tuning PID controllers based on performance requirements.
+- Understand digital PID control and discrete-time systems.
+- Practice PID controller tuning.
 - Connect mathematical models, simulations, and real-world sensor behavior.
+
+---
+
+**Course:** ENCS4380 – Interfacing Techniques  
+**University:** Birzeit University
