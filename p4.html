@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P4 - PID Tuning Challenge</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--bg:#fff7fa;--card:#fff;--primary:#e87aa6;--dark:#c2185b;--soft:#fde8f1;--text:#3a2a33;--muted:#96808c;--border:#f6dce8;--green:#23834b;--red:#c53d48}
+*{box-sizing:border-box;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
+nav.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 16px}
+nav.top b{color:var(--dark);margin-right:10px;font-size:14px}
+nav.top a{color:#85707b;text-decoration:none;font-size:12px;padding:7px 10px;border-radius:8px}
+nav.top a:hover,nav.top a.active{background:var(--soft);color:var(--dark)}
+nav.top a.home{margin-left:auto;background:var(--dark);color:#fff;font-weight:700}
+main{max-width:1100px;margin:auto;padding:28px 16px 40px}
+.eyebrow{color:var(--dark);font-size:11px;font-weight:700;letter-spacing:1.4px}
+h1{font-size:28px;margin:8px 0;color:#7a1141}
+h2{font-size:17px;margin:0 0 4px}
+.sn{font-size:10px;color:var(--primary);font-weight:700;letter-spacing:1.2px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:22px;margin-bottom:18px;box-shadow:0 5px 22px rgba(194,24,91,.05);scroll-margin-top:70px}
+.muted{color:var(--muted);font-size:12px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:16px}
+.field{display:flex;flex-direction:column;gap:8px}
+label{font-size:12px;font-weight:600;color:#5a4650}
+input,select{width:100%;padding:10px 12px;border:1px solid #f0d6e2;border-radius:9px;background:#fff;color:var(--text);font-size:13px;outline:none}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,122,166,.18)}
+input[type=range]{padding:0;accent-color:var(--dark)}
+.value{color:var(--dark);font-weight:700}
+.prediction-card{background:linear-gradient(135deg,#fff5f9,#fff)}
+.opts{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.opt{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;font-size:12px}
+.opt:has(input:checked){border-color:var(--primary);background:var(--soft);color:var(--dark)}
+.opt input{width:auto;accent-color:var(--dark)}
+.status{padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:9px;margin-top:14px;font-size:12px;line-height:1.7;color:#6e5a65}
+.status.success{border-color:#c5e5d1;background:#f3fbf5;color:var(--green)}
+.status.warning{border-color:#f0dfc3;background:#fffaf1;color:#946b2c}
+.status.bad{border-color:#f0c5ca;background:#fff4f5;color:var(--red)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:none;border-radius:9px;padding:11px 19px;background:var(--dark);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+button:hover{background:#a3144d}button.secondary{background:var(--soft);color:var(--dark)}button.secondary:hover{background:#fbd5e6}
+.plot{width:100%;height:375px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.metric{background:#fff8fb;border:1px solid #f9e1ec;padding:16px;border-radius:11px}
+.metric-name{font-size:11px;color:var(--muted)}.metric-number{font-size:21px;font-weight:800;color:var(--dark);margin-top:8px}
+.table-wrapper{overflow-x:auto;margin-top:12px}table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--border)}th{background:#fff1f6;color:var(--dark)}
+.pass{color:var(--green);font-weight:800}.fail{color:var(--red);font-weight:800}
+.score{font-size:37px;color:var(--dark);font-weight:800;margin:10px 0 2px}.hidden{display:none!important}
+footer{text-align:center;padding:20px 0;border-top:1px solid var(--border);margin-top:28px}
+@media(max-width:650px){.metrics{grid-template-columns:repeat(2,1fr)}.plot{height:310px}h1{font-size:23px}nav.top a.home{margin-left:0}}
+</style>
+</head>
+<body>
+<nav class="top">
+<b>∿ Dynamics Toolkit · Control</b>
+<a href="#challenge">Challenge</a><a href="#tuning">Tune PID</a><a href="#prediction">Predict</a><a href="#response">Response</a><a href="#results">Results</a>
+<a class="home" href="index.html">Home</a>
+</nav>
+<main>
+<header><div class="eyebrow">HOMEWORK 2 · MODULE P4</div><h1>PID Tuning Challenge</h1>
+<p class="muted">Tune a controller for an unknown first-order plant. Meet the overshoot, settling-time and steady-state error specifications to earn a perfect score.</p></header>
+<section class="card" id="challenge">
+<div class="sn">01 · CHALLENGE</div><h2>Hidden Plant & Target Specifications</h2>
+<p class="muted">A random plant is selected for each new challenge. Its gain K and time constant τ are hidden until you reveal them. The simulator models G(s) = K/(τs + 1).</p>
+<div class="grid">
+<div class="metric"><div class="metric-name">Plant</div><div class="metric-number" id="plantLabel">Unknown</div></div>
+<div class="metric"><div class="metric-name">Overshoot</div><div class="metric-number" id="specOvershoot">≤ 10%</div></div>
+<div class="metric"><div class="metric-name">Settling Time (±2%)</div><div class="metric-number" id="specSettling">≤ 3.0 s</div></div>
+<div class="metric"><div class="metric-name">Steady-State Error</div><div class="metric-number" id="specError">≤ 0.02</div></div>
+</div>
+<div class="actions"><button id="newBtn">New Random Challenge</button><button class="secondary" id="revealBtn">Reveal Plant</button></div>
+<div class="status" id="challengeNote">A hidden plant is ready. Adjust the PID gains and run the simulation.</div>
+</section>
+<section class="card" id="tuning">
+<div class="sn">02 · CONTROLLER</div><h2>Tune Your PID Gains</h2>
+<div class="grid">
+<div class="field"><label for="Kp">Proportional Gain (Kp)</label><input id="Kp" type="number" min="0" max="100" step="0.1" value="1"></div>
+<div class="field"><label for="Ki">Integral Gain (Ki)</label><input id="Ki" type="number" min="0" max="100" step="0.1" value="1"></div>
+<div class="field"><label for="Kd">Derivative Gain (Kd)</label><input id="Kd" type="number" min="0" max="100" step="0.1" value="0"></div>
+</div>
+<div class="grid">
+<div class="field"><label for="setpoint">Setpoint</label><input id="setpoint" type="number" step="0.1" value="1"></div>
+<div class="field"><label for="limit">Control Limit (±)</label><input id="limit" type="number" min="0.1" step="0.5" value="10"></div>
+<div class="field"><label for="duration">Simulation Duration (s)</label><input id="duration" type="number" min="5" max="30" step="1" value="15"></div>
+</div>
+<p class="muted" style="margin-top:14px">PID: u = Kp·e + Ki·∫e dt − Kd·dy/dt. RK4 integrates the closed loop at dt = 1 ms. Control is saturated at ±limit and conditional integral anti-windup is enabled.</p>
+<div class="actions"><button id="runBtn">▶ Run Simulation</button><button class="secondary" id="resetBtn">Reset Gains</button></div>
+<div class="status" id="message">Run the simulation to evaluate your controller.</div>
+</section>
+<section class="card prediction-card" id="prediction">
+<div class="sn">03 · INTERACTIVE LEARNING</div><h2>Predict, Then Check</h2>
+<p class="muted">Select a gain, predict how increasing it will change the response, and lock your prediction. Change only that gain to test your prediction on the same hidden plant.</p>
+<div class="field"><label for="question">What do you want to investigate?</label>
+<select id="question"><option value="p">Increase Kp: what happens to rise time?</option><option value="i">Increase Ki: what happens to steady-state error?</option><option value="d">Increase Kd: what happens to overshoot?</option></select></div>
+<div class="opts" id="predictionOptions"></div>
+<div class="actions"><button class="secondary" id="lockBtn">Lock Prediction</button></div>
+<div class="status" id="predictionResult">Choose your prediction, then lock it.</div>
+</section>
+<section class="card" id="response">
+<div class="sn">04 · SIMULATION</div><h2>Closed-Loop Step Response</h2>
+<div id="outputPlot" class="plot"></div>
+<p class="muted">The solid line is the plant output. The dashed line is the setpoint. The dotted lines are the ±2% settling band.</p>
+<h2 style="margin-top:20px">Control Signal u(t)</h2>
+<div id="controlPlot" class="plot"></div>
+<div class="status" id="satNote">Control saturation information will appear here.</div>
+</section>
+<section class="card" id="results">
+<div class="sn">05 · PERFORMANCE</div><h2>Results & Challenge Score</h2>
+<div class="metrics">
+<div class="metric"><div class="metric-name">Rise Time (10%–90%)</div><div class="metric-number" id="mRise">–</div></div>
+<div class="metric"><div class="metric-name">Overshoot</div><div class="metric-number" id="mOS">–</div></div>
+<div class="metric"><div class="metric-name">Settling Time (±2%)</div><div class="metric-number" id="mSet">–</div></div>
+<div class="metric"><div class="metric-name">Steady-State Error</div><div class="metric-number" id="mErr">–</div></div>
+</div>
+<div class="table-wrapper"><table><thead><tr><th>Criterion</th><th>Requirement</th><th>Actual</th><th>Status</th></tr></thead><tbody id="checksBody"></tbody></table></div>
+<div class="score" id="score">– / 100</div>
+<p class="muted">Score: 35 points for overshoot, 35 for settling time, and 30 for steady-state error. All three conditions must pass to win.</p>
+<div class="status" id="verdict">Start tuning to see your score.</div>
+<div class="actions"><button class="secondary" id="bestBtn">Save This Attempt</button></div>
+<div class="status" id="bestNote">No saved attempt yet.</div>
+</section>
+<footer class="muted">ENCS4380 · Homework 2 – PID Control · Module P4</footer>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = id => Number($(id).value);
+const fmt = (v, digits = 3) => Number.isFinite(v) ? Number(v.toFixed(digits)).toString() : "N/A";
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const PINK = "#e87aa6", DARK = "#c2185b";
+const spec = {overshoot:10, settling:3, error:0.02};
+let plant, challengeId = 0, latest = null, best = null, prediction = null;
+const questions = {
+ p:{gain:"Kp", choices:[["faster","Faster rise"],["slower","Slower rise"],["same","No significant change"]]},
+ i:{gain:"Ki", choices:[["lower","Lower steady-state error"],["higher","Higher steady-state error"],["same","No significant change"]]},
+ d:{gain:"Kd", choices:[["lower","Lower overshoot"],["higher","Higher overshoot"],["same","No significant change"]]}
+};
+function createPlant(){return {K:Number((0.6+Math.random()*1.6).toFixed(2)),tau:Number((0.8+Math.random()*2.2).toFixed(2))};}
+function settings(){return {Kp:num("Kp"),Ki:num("Ki"),Kd:num("Kd"),setpoint:num("setpoint"),limit:num("limit"),duration:num("duration")};}
+function validate(s){
+ const values=Object.values(s);
+ if(values.some(v=>!Number.isFinite(v)))throw new Error("Enter valid numeric settings.");
+ if(s.Kp<0||s.Ki<0||s.Kd<0||s.Kp>100||s.Ki>100||s.Kd>100)throw new Error("Gains must be between 0 and 100.");
+ if(s.setpoint<=0||s.limit<=0||s.duration<5||s.duration>30)throw new Error("Use a positive setpoint and control limit, and a duration from 5 to 30 seconds.");
+}
+function simulate(p,s){
+ const dt=0.001, steps=Math.round(s.duration/dt);
+ let y=0, integral=0, previousY=0, saturation=0;
+ const T=[],Y=[],R=[],U=[];
+ for(let i=0;i<=steps;i++){
+  const t=i*dt, e=s.setpoint-y, dy=(y-previousY)/dt;
+  let raw=s.Kp*e+s.Ki*integral-s.Kd*dy;
+  const pushing=(raw>s.limit&&e>0)||(raw< -s.limit&&e<0);
+  if(!pushing)integral+=e*dt;
+  raw=s.Kp*e+s.Ki*integral-s.Kd*dy;
+  const u=clamp(raw,-s.limit,s.limit);
+  if(Math.abs(raw)>s.limit)saturation++;
+  T.push(t);Y.push(y);R.push(s.setpoint);U.push(u);
+  previousY=y;
+  if(i<steps){
+   const f=v=>(-v+p.K*u)/p.tau;
+   const k1=f(y),k2=f(y+dt*k1/2),k3=f(y+dt*k2/2),k4=f(y+dt*k3);
+   y+=dt*(k1+2*k2+2*k3+k4)/6;
+   if(!Number.isFinite(y)||Math.abs(y)>1e8)throw new Error("The simulation became unstable. Reduce the gains.");
+  }
+ }
+ return {T,Y,R,U,saturation:100*saturation/(steps+1)};
+}
+function metrics(r,setpoint){
+ const {T,Y}=r, n=Y.length, band=0.02*Math.abs(setpoint);
+ function crossing(level){
+  for(let i=1;i<n;i++){
+   if(Y[i-1]<level&&Y[i]>=level)return T[i-1]+(level-Y[i-1])*(T[i]-T[i-1])/(Y[i]-Y[i-1]);
+  }
+  return null;
+ }
+ const a=crossing(0.1*setpoint), b=crossing(0.9*setpoint);
+ const rise=a!==null&&b!==null?b-a:null;
+ const peak=Math.max(...Y);
+ const overshoot=Math.max(0,(peak-setpoint)/Math.abs(setpoint)*100);
+ let lastOutside=-1;
+ for(let i=0;i<n;i++)if(Math.abs(Y[i]-setpoint)>band)lastOutside=i;
+ const settling=lastOutside<n-1?T[lastOutside+1]:null;
+ const error=Math.abs(setpoint-Y[n-1]);
+ return {rise,overshoot,settling,error};
+}
+const baseLayout=(title,ytitle)=>({
+ title:{text:title,font:{size:15,color:"#7a1141"}},
+ xaxis:{title:"Time (seconds)",gridcolor:"#f9e6ee"},yaxis:{title:ytitle,gridcolor:"#f9e6ee"},
+ paper_bgcolor:"#fff",plot_bgcolor:"#fff",font:{family:"Segoe UI, Arial",color:"#85707b"},
+ margin:{l:58,r:20,t:50,b:55},legend:{orientation:"h",y:-0.24}
+});
+const plotConfig={responsive:true,displaylogo:false};
+function plot(r,s){
+ const thin=a=>a.filter((_,i)=>i%5===0), T=thin(r.T);
+ Plotly.react("outputPlot",[
+  {x:T,y:thin(r.Y),name:"System Output",mode:"lines",line:{color:PINK,width:3}},
+  {x:[0,s.duration],y:[s.setpoint,s.setpoint],name:"Setpoint",mode:"lines",line:{color:DARK,dash:"dash",width:2}},
+  {x:[0,s.duration],y:[1.02*s.setpoint,1.02*s.setpoint],name:"±2% band",mode:"lines",line:{color:"#bca2af",dash:"dot",width:1}},
+  {x:[0,s.duration],y:[0.98*s.setpoint,0.98*s.setpoint],name:"Lower band",showlegend:false,mode:"lines",line:{color:"#bca2af",dash:"dot",width:1}}
+ ],baseLayout("Closed-Loop Output Response","Output"),plotConfig);
+ Plotly.react("controlPlot",[
+  {x:T,y:thin(r.U),name:"Control u(t)",mode:"lines",line:{color:DARK,width:2}},
+  {x:[0,s.duration],y:[s.limit,s.limit],name:"Upper limit",mode:"lines",line:{color:PINK,dash:"dash"}},
+  {x:[0,s.duration],y:[-s.limit,-s.limit],name:"Lower limit",mode:"lines",showlegend:false,line:{color:PINK,dash:"dash"}}
+ ],baseLayout("Controller Output and Saturation","Control u(t)"),plotConfig);
+}
+function grading(m){
+ const checks=[
+  {title:"Overshoot",target:"≤ "+spec.overshoot+"%",actual:fmt(m.overshoot,2)+"%",ok:m.overshoot<=spec.overshoot,points:35},
+  {title:"Settling time",target:"≤ "+spec.settling+" s",actual:m.settling===null?"Not settled":fmt(m.settling)+" s",ok:m.settling!==null&&m.settling<=spec.settling,points:35},
+  {title:"Steady-state error",target:"≤ "+spec.error,actual:fmt(m.error,4),ok:m.error<=spec.error,points:30}
+ ];
+ const score=checks.reduce((sum,c)=>sum+(c.ok?c.points:0),0);
+ $("checksBody").innerHTML=checks.map(c=>`<tr><td>${c.title}</td><td>${c.target}</td><td>${c.actual}</td><td class="${c.ok?'pass':'fail'}">${c.ok?'PASS':'FAIL'}</td></tr>`).join("");
+ $("score").textContent=score+" / 100";
+ const won=checks.every(c=>c.ok);
+ $("verdict").className="status "+(won?"success":"warning");
+ $("verdict").textContent=won?"Challenge completed! All three performance specifications passed.":"Keep tuning. Adjust the gains until all three criteria pass.";
+ return score;
+}
+function showMetrics(m){
+ $("mRise").textContent=m.rise===null?"N/A":fmt(m.rise)+" s";
+ $("mOS").textContent=fmt(m.overshoot,2)+" %";
+ $("mSet").textContent=m.settling===null?"Not settled":fmt(m.settling)+" s";
+ $("mErr").textContent=fmt(m.error,4);
+}
+function run(){
+ try{
+  if(typeof Plotly==="undefined")throw new Error("Plotly could not load. Check your internet connection.");
+  const s=settings();validate(s);
+  const r=simulate(plant,s),m=metrics(r,s.setpoint),score=grading(m);
+  latest={s,m,score,challengeId};
+  plot(r,s);showMetrics(m);
+  $("satNote").className="status "+(r.saturation>0.5?"warning":"success");
+  $("satNote").textContent=r.saturation>0.5?"The actuator was saturated for "+fmt(r.saturation,1)+"% of the run. Conditional anti-windup limits integral growth.":"Control remained within the saturation limit.";
+  $("message").className="status success";
+  $("message").textContent="Simulation completed. Results and score updated.";
+  checkPrediction(s,m);
+ }catch(err){latest=null;$("message").className="status bad";$("message").textContent="Error: "+err.message;}
+}
+function newChallenge(){
+ plant=createPlant();challengeId++;best=null;latest=null;prediction=null;
+ $("plantLabel").textContent="Unknown";
+ $("challengeNote").className="status";
+ $("challengeNote").textContent="New hidden plant generated. Tune Kp, Ki and Kd to meet the specifications.";
+ $("bestNote").textContent="No saved attempt yet.";
+ $("predictionResult").className="status";
+ $("predictionResult").textContent="Choose your prediction, then lock it.";
+ run();
+}
+function updatePredictionOptions(){
+ const q=questions[$("question").value];
+ $("predictionOptions").innerHTML=q.choices.map(([v,label])=>`<label class="opt"><input type="radio" name="prediction" value="${v}">${label}</label>`).join("");
+ prediction=null;
+ $("predictionResult").className="status";
+ $("predictionResult").textContent="Choose your prediction, then lock it.";
+}
+function lockPrediction(){
+ const chosen=document.querySelector('input[name="prediction"]:checked');
+ if(!chosen){$("predictionResult").textContent="Select one prediction first.";return;}
+ try{
+  const s=settings();validate(s);
+  const q=$("question").value, gain=questions[q].gain;
+  const m=metrics(simulate(plant,s),s.setpoint);
+  prediction={challengeId,q,gain,choice:chosen.value,base:s[gain],m,settings:JSON.stringify(s)};
+  $("predictionResult").className="status success";
+  $("predictionResult").textContent="Prediction locked at "+gain+" = "+s[gain]+". Increase that gain without changing other settings.";
+ }catch(err){$("predictionResult").textContent="Cannot lock prediction: "+err.message;}
+}
+function checkPrediction(s,m){
+ if(!prediction||prediction.challengeId!==challengeId)return;
+ const p=prediction,el=$("predictionResult");
+ if(s[p.gain]<=p.base){el.className="status warning";el.textContent="Increase "+p.gain+" above "+p.base+" to test your prediction.";return;}
+ const baseline=JSON.parse(p.settings);
+ const otherUnchanged=Object.keys(s).every(k=>k===p.gain||s[k]===baseline[k]);
+ if(!otherUnchanged){el.className="status warning";el.textContent="Other settings changed. Restore them or lock a new prediction for a fair comparison.";return;}
+ const delta=p.q==="p"?m.rise===null||p.m.rise===null?NaN:m.rise-p.m.rise:p.q==="i"?m.error-p.m.error:m.overshoot-p.m.overshoot;
+ const tol=p.q==="p"?0.001:p.q==="i"?0.0001:0.05;
+ const ok=(p.choice==="faster"||p.choice==="lower")&&delta< -tol||(p.choice==="slower"||p.choice==="higher")&&delta>tol||p.choice==="same"&&Number.isFinite(delta)&&Math.abs(delta)<=tol;
+ el.className="status "+(ok?"success":"warning");
+ el.textContent=(ok?"✔ Prediction matched. ":"✘ Prediction did not match. ")+(p.q==="p"?"Rise time":p.q==="i"?"Steady-state error":"Overshoot")+": "+fmt(p.q==="p"?p.m.rise:p.q==="i"?p.m.error:p.m.overshoot,4)+" → "+fmt(p.q==="p"?m.rise:p.q==="i"?m.error:m.overshoot,4)+".";
+}
+function resetGains(){$("Kp").value=1;$("Ki").value=1;$("Kd").value=0;run();}
+function saveAttempt(){
+ if(!latest){$("bestNote").textContent="Run a valid simulation first.";return;}
+ if(!best||latest.score>best.score)best={...latest,s:{...latest.s}};
+ $("bestNote").textContent="Best saved attempt for this challenge: "+best.score+"/100 · Kp="+fmt(best.s.Kp,2)+", Ki="+fmt(best.s.Ki,2)+", Kd="+fmt(best.s.Kd,2)+".";
+}
+$("newBtn").addEventListener("click",newChallenge);
+$("revealBtn").addEventListener("click",()=>{$("plantLabel").textContent="K="+plant.K+", τ="+plant.tau+"s";$("challengeNote").textContent="Plant revealed: G(s) = "+plant.K+" / ("+plant.tau+"s + 1). Start a new challenge for a new hidden plant.";});
+$("runBtn").addEventListener("click",run);
+$("resetBtn").addEventListener("click",resetGains);
+$("question").addEventListener("change",updatePredictionOptions);
+$("lockBtn").addEventListener("click",lockPrediction);
+$("bestBtn").addEventListener("click",saveAttempt);
+let timer=null;
+["Kp","Ki","Kd","setpoint","limit","duration"].forEach(id=>$(id).addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(run,250);}));
+updatePredictionOptions();newChallenge();
+</script>
+</body>
+</html>
